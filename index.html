@@ -1,26 +1,18 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html dir="rtl" lang="he">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת הקצאת עובדים - Farkad</title>
-    <meta name="description" content="מערכת מתקדמת לניהול משמרות והקצאת עובדים למקומות עבודה">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👥</text></svg>">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>מערכת הקצאת עובדים</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
-            direction: rtl;
+            color: #333;
         }
-
+        
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -30,1216 +22,980 @@
             overflow: hidden;
             backdrop-filter: blur(10px);
         }
-
+        
         .header {
-            background: linear-gradient(135deg, #2c3e50, #3498db);
-            color: white;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             padding: 30px;
             text-align: center;
-            position: relative;
+            color: white;
         }
-
+        
         .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            margin: 0 0 10px 0;
+            font-size: 2rem;
         }
-
+        
         .header p {
+            margin: 0;
             font-size: 1.1rem;
-            opacity: 0.9;
         }
-
-        .current-time {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 10px 15px;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            backdrop-filter: blur(5px);
-        }
-
-        .controls {
-            padding: 30px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .controls-row {
+        
+        .controls, .instructions {
+            padding: 1rem 2rem;
             display: flex;
-            gap: 15px;
             flex-wrap: wrap;
-            align-items: center;
+            gap: 10px;
             justify-content: center;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .control-group label {
-            font-weight: 600;
-            color: #495057;
-            font-size: 0.9rem;
-        }
-
-        input, select, button {
-            padding: 12px 20px;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-        }
-
-        button {
-            background: linear-gradient(135deg, #3498db, #2c3e50);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            min-width: 120px;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #27ae60, #229954);
-        }
-
-        .main-content {
-            padding: 30px;
-        }
-
-        .search-filter {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
             align-items: center;
         }
-
-        .allocation-grid {
+        
+        .calendar-container {
+            overflow-x: auto;
+            margin: 2rem;
+        }
+        
+        .calendar-grid {
             display: grid;
-            grid-template-columns: 200px 1fr;
-            gap: 20px;
-            margin-top: 20px;
+            min-width: 800px;
+            background: #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
         }
-
-        .employees-list {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            border: 2px solid #e9ecef;
-        }
-
-        .employees-list h3 {
-            margin-bottom: 15px;
-            color: #2c3e50;
-            font-size: 1.2rem;
-        }
-
-        .employee-item {
-            background: white;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            cursor: grab;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .employee-item:hover {
-            border-color: #3498db;
-            transform: translateX(-5px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .employee-item.dragging {
-            opacity: 0.5;
-            cursor: grabbing;
-        }
-
-        .locations-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-        }
-
-        .location-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            border: 2px solid #e9ecef;
-            transition: all 0.3s ease;
-            min-height: 200px;
-        }
-
-        .location-card:hover {
-            border-color: #3498db;
-            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.15);
-        }
-
-        .location-card.has-assignment {
-            border-color: #27ae60;
-            background: linear-gradient(135deg, #d5f4e6, #ffffff);
-        }
-
-        .location-header {
-            font-weight: 600;
-            font-size: 1.1rem;
-            color: #2c3e50;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #e9ecef;
-        }
-
-        .assigned-employee {
-            background: linear-gradient(135deg, #3498db, #2c3e50);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            animation: slideIn 0.3s ease;
-        }
-
-        .remove-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            padding: 5px 8px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-
-        .remove-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .drop-zone {
-            border: 2px dashed #bdc3c7;
-            border-radius: 8px;
-            padding: 20px;
+        
+        .calendar-grid .header-cell, 
+        .calendar-grid .name-cell, 
+        .calendar-grid .time-cell {
+            padding: 1rem;
+            border: 1px solid #ccc;
             text-align: center;
-            color: #7f8c8d;
-            transition: all 0.3s ease;
+            cursor: pointer;
+            background: white;
+            transition: background 0.2s;
         }
-
-        .drop-zone.drag-over {
-            border-color: #3498db;
-            background: rgba(52, 152, 219, 0.1);
-            color: #3498db;
+        
+        .calendar-grid .time-cell:hover {
+            background: #d6f0ff;
         }
-
-        .status-bar {
-            background: #2c3e50;
+        
+        .calendar-grid .time-cell.assigned {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: #2d2d2d;
             color: white;
-            padding: 15px 30px;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 300px;
+            max-width: 90%;
+        }
+        
+        .modal-content h3 {
+            margin-top: 0;
+            text-align: center;
+        }
+        
+        .place-choice {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+        
+        .place-btn {
+            border: 2px solid transparent;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            background: #ffffff;
+            cursor: pointer;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .place-btn:hover {
+            border-color: #0056b3;
+            background: #e2e6ea;
+        }
+        
+        button {
+            margin: 0.25rem;
+            padding: 0.6rem 1.4rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s, transform 0.1s;
+            background: #007bff;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #138496;
+        }
+        
+        .header-cell {
+            background: #343a40 !important;
+            color: #fff !important;
+            font-weight: bold;
+        }
+        
+        .name-cell {
+            background: #212529 !important;
+            color: #fff !important;
+            font-weight: bold;
+        }
+        
+        .place-color-0 { background-color: #d1ecf1 !important; border-color: #0c5460 !important; }
+        .place-color-1 { background-color: #d4edda !important; border-color: #155724 !important; }
+        .place-color-2 { background-color: #fff3cd !important; border-color: #856404 !important; }
+        .place-color-3 { background-color: #f8d7da !important; border-color: #721c24 !important; }
+        .place-color-4 { background-color: #e2e3e5 !important; border-color: #6c757d !important; }
+        .place-color-5 { background-color: #cfe2ff !important; border-color: #084298 !important; }
+        .place-color-6 { background-color: #e8daef !important; border-color: #512e5f !important; }
+        
+        #assignmentSummary {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+            padding: 1rem;
+            background: rgba(0, 123, 255, 0.1);
+            border-radius: 8px;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.8);
+            margin: 2rem;
+            border-radius: 12px;
+        }
+        
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .instructions p {
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .worker-row, .place-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.9rem;
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #27ae60;
+            background: #333;
+            padding: 0.5rem;
+            border-radius: 6px;
             color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 0.5rem;
         }
-
-        .notification.show {
-            transform: translateX(0);
+        
+        .worker-row span, .place-row span {
+            font-weight: bold;
         }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .allocation-grid {
-                grid-template-columns: 1fr;
+        
+        /* Print styles */
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
             }
             
-            .controls-row {
-                flex-direction: column;
-                align-items: stretch;
+            .container {
+                box-shadow: none !important;
+                background: white !important;
+                border-radius: 0 !important;
             }
             
-            .search-filter {
-                flex-direction: column;
+            .controls, .instructions {
+                display: none !important;
             }
-        }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+            
+            .header {
+                background: #333 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .calendar-grid {
+                background: white !important;
+            }
+            
+            .header-cell, .name-cell {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .time-cell.assigned {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            #assignmentSummary {
+                display: none !important;
+            }
         }
     </style>
+
+    <!-- SheetJS library for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- Firebase Auth Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            authDomain: "farkad-scheduler.firebaseapp.com",
+            projectId: "farkad-scheduler",
+            storageBucket: "farkad-scheduler.firebasestorage.app",
+            messagingSenderId: "71149615141",
+            appId: "1:71149615141:web:97eac63fe0c39d4831a7cc",
+            measurementId: "G-41H0PK4LMR"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getFirestore();
+
+        // Auth check on page load
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                alert("يجب تسجيل الدخول أولاً");
+                window.location.href = "login.html";
+                return;
+            }
+
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (!userDoc.exists() || !userDoc.data().paid) {
+                alert("حسابك غير مفعل. تواصل مع الدعم الفني.");
+                window.location.href = "login.html";
+            } else {
+                console.log("المستخدم مسجل الدخول ومعتمد");
+            }
+        });
+
+        // Save schedule to Firestore
+        window.saveScheduleToFirebase = async function(data) {
+            const user = auth.currentUser;
+            if (!user) return;
+            const userDoc = doc(db, "schedules", user.uid);
+            await setDoc(userDoc, data);
+            alert("تم حفظ الجدول في السحابة بنجاح");
+        };
+    </script>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
-            <div class="current-time" id="currentTime"></div>
-            <h1>👥 מערכת הקצאת עובדים</h1>
-            <p>ניהול משמרות ומקומות עבודה מתקדם</p>
+            <h1>🏢 نظام إدارة المناوبات</h1>
+            <p>إدارة مناوبات العمال وأماكن العمل</p>
         </div>
-
+        
         <div class="controls">
-            <div class="controls-row">
-                <div class="control-group">
-                    <label>הוסף עובד חדש</label>
-                    <input type="text" id="newEmployeeName" placeholder="שם העובד">
-                </div>
-                <button onclick="addEmployee()">הוסף עובד</button>
-                
-                <div class="control-group">
-                    <label>הוסף מקום עבודה</label>
-                    <input type="text" id="newLocationName" placeholder="שם המקום">
-                </div>
-                <button onclick="addLocation()">הוסף מקום</button>
-                
-                <button class="btn-secondary" onclick="exportData()">📊 ייצא נתונים</button>
-                <button class="btn-secondary" onclick="exportDataAdvanced()">📁 ייצא עם בחירת מקום</button>
-                <button class="btn-success" onclick="syncWithDatabase()">☁️ סנכרן עם מסד נתונים</button>
-                <button class="btn-danger" onclick="clearAll()">🗑️ נקה הכל</button>
-            </div>
+            <button onclick="saveSchedule()">💾 حفظ الملف</button>
+            <input accept=".json" id="fileInput" onchange="loadSchedule(event)" style="display:none" type="file"/>
+            <button onclick="document.getElementById('fileInput').click()">📂 تحميل</button>
+            <button onclick="showAddPlaceModal()">➕ إضافة مكان</button>
+            <button onclick="showAddWorkerModal()">👤 إضافة عامل</button>
+            <button onclick="showManagePlacesModal()">⚙️ إدارة الأماكن</button>
+            <button onclick="showManageWorkersModal()">👥 إدارة العمال</button>
+            <button class="btn-success" onclick="printSchedule()">🖨️ طباعة</button>
+            <button class="btn-info" onclick="exportToExcel()">📊 تصدير Excel</button>
+            <button class="btn-secondary" onclick="clearAssignments()">🗑️ مسح التوزيعات</button>
+            <button class="btn-secondary" onclick="resetLocalStorage()">🔄 إعادة تعيين</button>
         </div>
 
-        <div class="main-content">
-            <div class="search-filter">
-                <input type="text" id="searchEmployee" placeholder="חפש עובד..." onkeyup="filterEmployees()">
-                <input type="text" id="searchLocation" placeholder="חפש מקום..." onkeyup="filterLocations()">
-                <button class="btn-success" onclick="saveData()">💾 שמור נתונים</button>
-            </div>
-
-            <div class="allocation-grid">
-                <div class="employees-list">
-                    <h3>רשימת עובדים</h3>
-                    <div id="employeesList"></div>
-                </div>
-
-                <div class="locations-grid" id="locationsGrid"></div>
-            </div>
+        <div class="calendar-container">
+            <div class="calendar-grid" id="calendar"></div>
         </div>
+        
+        <div id="assignmentSummary"></div>
 
-        <div class="status-bar">
-            <div>סה"כ עובדים: <span id="totalEmployees">0</span></div>
-            <div>סה"כ מקומות: <span id="totalLocations">0</span></div>
-            <div>הקצאות פעילות: <span id="activeAssignments">0</span></div>
+        <div class="instructions">
+            <h3>📌 تعليمات الاستخدام</h3>
+            <p>اضغط على أي خانة لاختيار مكان العمل. اضغط مرة أخرى لإزالة التوزيع. استخدم الأزرار لإدارة العمال والأماكن.</p>
         </div>
     </div>
 
-    <div class="notification" id="notification"></div>
+    <!-- Modals -->
+    <div class="modal" id="placeSelectorModal">
+        <div class="modal-content">
+            <h3>اختر مكان العمل</h3>
+            <div class="place-choice" id="placeChoiceContainer"></div>
+            <button class="btn-secondary" onclick="closePlaceSelector()">إلغاء</button>
+        </div>
+    </div>
+
+    <div class="modal" id="addPlaceModal">
+        <div class="modal-content">
+            <h3>إضافة مكان جديد</h3>
+            <input id="newPlaceInput" placeholder="اسم المكان" type="text"/>
+            <div style="margin-top: 1rem; text-align: center;">
+                <button onclick="saveNewPlace()">حفظ</button>
+                <button class="btn-secondary" onclick="closeAddPlaceModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addWorkerModal">
+        <div class="modal-content">
+            <h3>إضافة عامل جديد</h3>
+            <input id="newWorkerInput" placeholder="اسم العامل" type="text"/>
+            <input id="newWorkerId" placeholder="رقم الهوية" type="text"/>
+            <input id="newWorkerPhone" placeholder="رقم الهاتف" type="text"/>
+            <div style="margin-top: 1rem; text-align: center;">
+                <button onclick="saveNewWorker()">حفظ</button>
+                <button class="btn-secondary" onclick="closeAddWorkerModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="editWorkerModal">
+        <div class="modal-content">
+            <h3>تعديل بيانات العامل</h3>
+            <input id="editWorkerName" placeholder="اسم العامل" type="text" />
+            <input id="editWorkerId" placeholder="رقم الهوية" type="text" />
+            <input id="editWorkerPhone" placeholder="رقم الهاتف" type="text" />
+            <div style="margin-top: 1rem; text-align: center;">
+                <button onclick="saveEditedWorker()">حفظ</button>
+                <button class="btn-secondary" onclick="closeEditWorkerModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="managePlacesModal">
+        <div class="modal-content">
+            <h3>إدارة الأماكن</h3>
+            <div id="placeListContainer" style="max-height: 300px; overflow-y: auto;"></div>
+            <button class="btn-secondary" onclick="closeManagePlacesModal()">إغلاق</button>
+        </div>
+    </div>
+
+    <div class="modal" id="manageWorkersModal">
+        <div class="modal-content">
+            <h3>إدارة العمال</h3>
+            <div id="workerListContainer" style="max-height: 300px; overflow-y: auto;"></div>
+            <button class="btn-secondary" onclick="closeManageWorkersModal()">إغلاق</button>
+        </div>
+    </div>
+
+    <div class="modal" id="workerDetailsModal">
+        <div class="modal-content">
+            <h3>تفاصيل العامل</h3>
+            <p id="workerDetailsText"></p>
+            <button class="btn-secondary" onclick="closeWorkerDetailsModal()">إغلاق</button>
+        </div>
+    </div>
 
     <script>
-        // Data storage
-        let employees = [];
-        let locations = [];
-        let assignments = {};
+        // Global variables
+        const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+        const workers = [];
+        const places = [];
 
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
-            loadData();
-            updateDisplay();
-            updateTime();
-            setInterval(updateTime, 1000);
-        });
+        // Calendar generation
+        function generateCalendar() {
+            const calendar = document.getElementById("calendar");
+            calendar.innerHTML = '';
+            calendar.style.gridTemplateColumns = `repeat(${days.length + 1}, 1fr)`;
 
-        function updateTime() {
-            const now = new Date();
-            const timeString = now.toLocaleString('he-IL', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
+            // Add empty header cell
+            calendar.appendChild(createCell('', 'header-cell'));
+            
+            // Add day headers
+            days.forEach(day => calendar.appendChild(createCell(day, 'header-cell')));
+
+            // Add worker rows
+            workers.forEach(worker => {
+                const name = typeof worker === 'string' ? worker : worker.name;
+                const nameCell = createCell(name, 'name-cell');
+                nameCell.onclick = () => showWorkerDetails(worker);
+                calendar.appendChild(nameCell);
+                
+                // Add time cells for each day
+                days.forEach(() => {
+                    const cell = createCell('', 'time-cell');
+                    cell.onclick = () => {
+                        if (cell.textContent.trim()) {
+                            clearAssignment(cell);
+                        } else {
+                            openPlaceSelector(cell);
+                        }
+                    };
+                    calendar.appendChild(cell);
+                });
             });
-            document.getElementById('currentTime').textContent = timeString;
         }
 
-        function addEmployee() {
-            const name = document.getElementById('newEmployeeName').value.trim();
-            if (!name) {
-                showNotification('אנא הכנס שם עובד', 'error');
-                return;
-            }
+        function createCell(text, className) {
+            const div = document.createElement('div');
+            div.className = className;
+            div.textContent = text;
+            return div;
+        }
+
+        // Place selector functions
+        function openPlaceSelector(cell) {
+            const container = document.getElementById("placeChoiceContainer");
+            container.innerHTML = '';
             
-            if (employees.includes(name)) {
-                showNotification('עובד זה כבר קיים ברשימה', 'error');
-                return;
-            }
-
-            employees.push(name);
-            document.getElementById('newEmployeeName').value = '';
-            updateDisplay();
-            saveData();
-            showNotification(`עובד "${name}" נוסף בהצלחה`);
-        }
-
-        function addLocation() {
-            const name = document.getElementById('newLocationName').value.trim();
-            if (!name) {
-                showNotification('אנא הכנס שם מקום', 'error');
-                return;
-            }
+            places.forEach((place, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'place-btn';
+                btn.textContent = place;
+                btn.onclick = () => {
+                    cell.textContent = place;
+                    cell.className = 'time-cell assigned place-color-' + (index % 7);
+                    closePlaceSelector();
+                    autoSaveSchedule();
+                    updateAssignmentSummary();
+                };
+                container.appendChild(btn);
+            });
             
-            if (locations.includes(name)) {
-                showNotification('מקום זה כבר קיים ברשימה', 'error');
-                return;
-            }
-
-            locations.push(name);
-            document.getElementById('newLocationName').value = '';
-            updateDisplay();
-            saveData();
-            showNotification(`מקום "${name}" נוסף בהצלחה`);
+            document.getElementById("placeSelectorModal").style.display = 'flex';
         }
 
-        function removeEmployee(employeeName) {
-            if (confirm(`האם אתה בטוח שברצונך למחוק את העובד "${employeeName}"?`)) {
-                employees = employees.filter(emp => emp !== employeeName);
-                // Remove all assignments for this employee
-                Object.keys(assignments).forEach(location => {
-                    assignments[location] = assignments[location].filter(emp => emp !== employeeName);
-                    if (assignments[location].length === 0) {
-                        delete assignments[location];
+        function closePlaceSelector() {
+            document.getElementById("placeSelectorModal").style.display = 'none';
+        }
+
+        function clearAssignment(cell) {
+            cell.textContent = '';
+            cell.classList.remove('assigned');
+            // Remove all place-color classes
+            for (let i = 0; i < 7; i++) {
+                cell.classList.remove('place-color-' + i);
+            }
+            updateAssignmentSummary();
+            autoSaveSchedule();
+        }
+
+        // Worker management functions
+        function showAddWorkerModal() {
+            document.getElementById("addWorkerModal").style.display = "flex";
+        }
+
+        function closeAddWorkerModal() {
+            document.getElementById("addWorkerModal").style.display = "none";
+            document.getElementById("newWorkerInput").value = '';
+            document.getElementById("newWorkerId").value = '';
+            document.getElementById("newWorkerPhone").value = '';
+        }
+
+        function saveNewWorker() {
+            const nameInput = document.getElementById("newWorkerInput");
+            const idInput = document.getElementById("newWorkerId");
+            const phoneInput = document.getElementById("newWorkerPhone");
+            
+            const name = nameInput.value.trim();
+            const id = idInput.value.trim();
+            const phone = phoneInput.value.trim();
+            
+            if (name && id && phone) {
+                workers.push({ name, id, phone });
+                closeAddWorkerModal();
+                generateCalendar();
+                autoSaveSchedule();
+            } else {
+                alert("يرجى ملء جميع الحقول.");
+            }
+        }
+
+        function showManageWorkersModal() {
+            const container = document.getElementById("workerListContainer");
+            container.innerHTML = '';
+            
+            workers.forEach((worker, index) => {
+                const row = document.createElement('div');
+                row.className = 'worker-row';
+                
+                const details = document.createElement('span');
+                details.innerHTML = `<strong>${worker.name}</strong><br>هوية: ${worker.id}<br>📞 ${worker.phone}`;
+                
+                const buttons = document.createElement('div');
+                buttons.innerHTML = `
+                    <button onclick="editWorker(${index})" style="margin: 2px; padding: 4px 8px;">✏️</button>
+                    <button class="btn-secondary" onclick="removeWorker(${index})" style="margin: 2px; padding: 4px 8px;">🗑️</button>
+                `;
+
+                row.appendChild(details);
+                row.appendChild(buttons);
+                container.appendChild(row);
+            });
+
+            document.getElementById("manageWorkersModal").style.display = 'flex';
+        }
+
+        function closeManageWorkersModal() {
+            document.getElementById("manageWorkersModal").style.display = "none";
+        }
+
+        function removeWorker(index) {
+            if (confirm("هل أنت متأكد من حذف هذا العامل؟")) {
+                workers.splice(index, 1);
+                autoSaveSchedule();
+                showManageWorkersModal();
+                generateCalendar();
+            }
+        }
+
+        let editingWorkerIndex = null;
+
+        function editWorker(index) {
+            const worker = workers[index];
+            document.getElementById("editWorkerName").value = worker.name;
+            document.getElementById("editWorkerId").value = worker.id;
+            document.getElementById("editWorkerPhone").value = worker.phone;
+            editingWorkerIndex = index;
+            closeManageWorkersModal();
+            document.getElementById("editWorkerModal").style.display = "flex";
+        }
+
+        function saveEditedWorker() {
+            const name = document.getElementById("editWorkerName").value.trim();
+            const id = document.getElementById("editWorkerId").value.trim();
+            const phone = document.getElementById("editWorkerPhone").value.trim();
+
+            if (name && id && phone) {
+                workers[editingWorkerIndex] = { name, id, phone };
+                autoSaveSchedule();
+                generateCalendar();
+                closeEditWorkerModal();
+            } else {
+                alert("يرجى ملء جميع الحقول.");
+            }
+        }
+
+        function closeEditWorkerModal() {
+            document.getElementById("editWorkerModal").style.display = "none";
+            editingWorkerIndex = null;
+        }
+
+        function showWorkerDetails(worker) {
+            const text = typeof worker === 'string'
+                ? `<strong>الاسم:</strong> ${worker}<br><em>لا توجد معلومات إضافية</em>`
+                : `<strong>الاسم:</strong> ${worker.name}<br><strong>الهوية:</strong> ${worker.id}<br><strong>الهاتف:</strong> ${worker.phone}`;
+            document.getElementById("workerDetailsText").innerHTML = text;
+            document.getElementById("workerDetailsModal").style.display = "flex";
+        }
+
+        function closeWorkerDetailsModal() {
+            document.getElementById("workerDetailsModal").style.display = "none";
+        }
+
+        // Place management functions
+        function showAddPlaceModal() {
+            document.getElementById("addPlaceModal").style.display = "flex";
+        }
+
+        function closeAddPlaceModal() {
+            document.getElementById("addPlaceModal").style.display = "none";
+            document.getElementById("newPlaceInput").value = '';
+        }
+
+        function saveNewPlace() {
+            const input = document.getElementById("newPlaceInput");
+            const name = input.value.trim();
+            if (name) {
+                places.push(name);
+                closeAddPlaceModal();
+                autoSaveSchedule();
+            } else {
+                alert("يرجى إدخال اسم المكان.");
+            }
+        }
+
+        function showManagePlacesModal() {
+            const container = document.getElementById("placeListContainer");
+            container.innerHTML = '';
+            
+            places.forEach((place, index) => {
+                const row = document.createElement('div');
+                row.className = 'place-row';
+                row.innerHTML = `
+                    <span>${place}</span>
+                    <div>
+                        <button onclick="renamePlace(${index})" style="margin: 2px; padding: 4px 8px;">✏️</button>
+                        <button class="btn-secondary" onclick="removePlace(${index})" style="margin: 2px; padding: 4px 8px;">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+            
+            document.getElementById("managePlacesModal").style.display = 'flex';
+        }
+
+        function closeManagePlacesModal() {
+            document.getElementById("managePlacesModal").style.display = "none";
+        }
+
+        function renamePlace(index) {
+            const newName = prompt("أدخل الاسم الجديد للمكان:", places[index]);
+            if (newName) {
+                const oldName = places[index];
+                places[index] = newName.trim();
+                
+                // Update all assignments with the old name
+                document.querySelectorAll('.time-cell').forEach(cell => {
+                    if (cell.textContent.trim() === oldName) {
+                        cell.textContent = newName.trim();
                     }
                 });
-                updateDisplay();
-                saveData();
-                showNotification(`העובד "${employeeName}" נמחק בהצלחה`);
-            }
-        }
-
-        function removeLocation(locationName) {
-            if (confirm(`האם אתה בטוח שברצונך למחוק את המקום "${locationName}"?`)) {
-                locations = locations.filter(loc => loc !== locationName);
-                delete assignments[locationName];
-                updateDisplay();
-                saveData();
-                showNotification(`המקום "${locationName}" נמחק בהצלחה`);
-            }
-        }
-
-        function assignEmployee(employeeName, locationName) {
-            if (!assignments[locationName]) {
-                assignments[locationName] = [];
-            }
-            
-            if (!assignments[locationName].includes(employeeName)) {
-                assignments[locationName].push(employeeName);
-                updateDisplay();
-                saveData();
-                showNotification(`העובד "${employeeName}" הוקצה למקום "${locationName}"`);
-            }
-        }
-
-        function removeAssignment(employeeName, locationName) {
-            if (assignments[locationName]) {
-                assignments[locationName] = assignments[locationName].filter(emp => emp !== employeeName);
-                if (assignments[locationName].length === 0) {
-                    delete assignments[locationName];
-                }
-                updateDisplay();
-                saveData();
-                showNotification(`ההקצאה של "${employeeName}" מ"${locationName}" בוטלה`);
-            }
-        }
-
-        function updateDisplay() {
-            updateEmployeesList();
-            updateLocationsGrid();
-            updateStatusBar();
-        }
-
-        function updateEmployeesList() {
-            const container = document.getElementById('employeesList');
-            container.innerHTML = '';
-
-            employees.forEach(employee => {
-                const div = document.createElement('div');
-                div.className = 'employee-item';
-                div.draggable = true;
-                div.textContent = employee;
-                div.ondragstart = (e) => {
-                    e.dataTransfer.setData('text/plain', employee);
-                    div.classList.add('dragging');
-                };
-                div.ondragend = () => {
-                    div.classList.remove('dragging');
-                };
-                div.ondblclick = () => removeEmployee(employee);
-                container.appendChild(div);
-            });
-        }
-
-        function updateLocationsGrid() {
-            const container = document.getElementById('locationsGrid');
-            container.innerHTML = '';
-
-            locations.forEach(location => {
-                const card = document.createElement('div');
-                card.className = 'location-card';
                 
-                const hasAssignments = assignments[location] && assignments[location].length > 0;
-                if (hasAssignments) {
-                    card.classList.add('has-assignment');
-                }
+                showManagePlacesModal();
+                autoSaveSchedule();
+                updateAssignmentSummary();
+            }
+        }
 
-                const header = document.createElement('div');
-                header.className = 'location-header';
-                header.innerHTML = `${location} <button class="remove-btn" onclick="removeLocation('${location}')" style="float: left; margin-top: -5px;">❌</button>`;
-
-                const content = document.createElement('div');
+        function removePlace(index) {
+            if (confirm("هل أنت متأكد من حذف هذا المكان؟")) {
+                const placeName = places[index];
+                places.splice(index, 1);
                 
-                if (assignments[location] && assignments[location].length > 0) {
-                    assignments[location].forEach(employee => {
-                        const empDiv = document.createElement('div');
-                        empDiv.className = 'assigned-employee';
-                        empDiv.innerHTML = `
-                            <span>${employee}</span>
-                            <button class="remove-btn" onclick="removeAssignment('${employee}', '${location}')">✖</button>
-                        `;
-                        content.appendChild(empDiv);
-                    });
-                } else {
-                    const dropZone = document.createElement('div');
-                    dropZone.className = 'drop-zone';
-                    dropZone.textContent = 'גרור עובד לכאן או לחץ כדי להקצות';
-                    dropZone.onclick = () => showAssignmentDialog(location);
-                    content.appendChild(dropZone);
-                }
-
-                // Add drag and drop functionality
-                card.ondragover = (e) => {
-                    e.preventDefault();
-                    card.classList.add('drag-over');
-                };
-                card.ondragleave = () => {
-                    card.classList.remove('drag-over');
-                };
-                card.ondrop = (e) => {
-                    e.preventDefault();
-                    card.classList.remove('drag-over');
-                    const employee = e.dataTransfer.getData('text/plain');
-                    assignEmployee(employee, location);
-                };
-
-                card.appendChild(header);
-                card.appendChild(content);
-                container.appendChild(card);
-            });
-        }
-
-        function showAssignmentDialog(location) {
-            const availableEmployees = employees.filter(emp => 
-                !assignments[location] || !assignments[location].includes(emp)
-            );
-            
-            if (availableEmployees.length === 0) {
-                showNotification('אין עובדים זמינים להקצאה', 'error');
-                return;
-            }
-
-            const employee = prompt(`בחר עובד להקצאה למקום "${location}":\n\n${availableEmployees.map((emp, i) => `${i + 1}. ${emp}`).join('\n')}\n\nהכנס מספר או שם:`);
-            
-            if (employee) {
-                const selectedEmployee = availableEmployees.find(emp => 
-                    emp === employee || availableEmployees[parseInt(employee) - 1] === emp
-                ) || availableEmployees[parseInt(employee) - 1];
-                
-                if (selectedEmployee) {
-                    assignEmployee(selectedEmployee, location);
-                }
-            }
-        }
-
-        function updateStatusBar() {
-            document.getElementById('totalEmployees').textContent = employees.length;
-            document.getElementById('totalLocations').textContent = locations.length;
-            
-            let totalAssignments = 0;
-            Object.values(assignments).forEach(empList => {
-                totalAssignments += empList.length;
-            });
-            document.getElementById('activeAssignments').textContent = totalAssignments;
-        }
-
-        function filterEmployees() {
-            const searchTerm = document.getElementById('searchEmployee').value.toLowerCase();
-            const employeeItems = document.querySelectorAll('.employee-item');
-            
-            employeeItems.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(searchTerm) ? 'block' : 'none';
-            });
-        }
-
-        function filterLocations() {
-            const searchTerm = document.getElementById('searchLocation').value.toLowerCase();
-            const locationCards = document.querySelectorAll('.location-card');
-            
-            locationCards.forEach(card => {
-                const text = card.textContent.toLowerCase();
-                card.style.display = text.includes(searchTerm) ? 'block' : 'none';
-            });
-        }
-
-        function saveData() {
-            const data = {
-                employees,
-                locations,
-                assignments,
-                timestamp: new Date().toISOString()
-            };
-            
-            // In a real application, you would send this to a server
-            // For now, we'll save to localStorage as a backup
-            try {
-                localStorage.setItem('farkadData', JSON.stringify(data));
-                showNotification('הנתונים נשמרו בהצלחה');
-            } catch (error) {
-                showNotification('שגיאה בשמירת הנתונים', 'error');
-            }
-        }
-
-        function loadData() {
-            try {
-                const savedData = localStorage.getItem('farkadData');
-                if (savedData) {
-                    const data = JSON.parse(savedData);
-                    employees = data.employees || [];
-                    locations = data.locations || [];
-                    assignments = data.assignments || {};
-                    showNotification('הנתונים נטענו בהצלחה');
-                }
-            } catch (error) {
-                console.error('Error loading data:', error);
-                // Initialize with default data if loading fails
-                employees = ['אחמד', 'מוחמד', 'עלי', 'פאטמה'];
-                locations = ['קבלה', 'מטבח', 'אולם', 'בר'];
-                assignments = {};
-            }
-        }
-
-        async function exportData() {
-            const data = {
-                employees,
-                locations,
-                assignments,
-                exportDate: new Date().toISOString(),
-                totalEmployees: employees.length,
-                totalLocations: locations.length,
-                totalAssignments: Object.values(assignments).reduce((sum, arr) => sum + arr.length, 0)
-            };
-            
-            // Create different export formats
-            const format = prompt('בחר פורמט ייצוא:\n1. JSON (לגיבוי)\n2. CSV (לאקסל)\n3. טקסט פשוט\n\nהכנס מספר (1-3):');
-            
-            let blob, filename, fileExtension, acceptTypes;
-            const dateStr = new Date().toISOString().split('T')[0];
-            
-            switch(format) {
-                case '1':
-                case 'JSON':
-                case 'json':
-                    blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                    filename = `farkad-backup-${dateStr}.json`;
-                    fileExtension = '.json';
-                    acceptTypes = {'application/json': ['.json']};
-                    break;
-                    
-                case '2':
-                case 'CSV':
-                case 'csv':
-                    let csvContent = 'עובד,מקום עבודה,תאריך הקצאה\n';
-                    Object.entries(assignments).forEach(([location, empList]) => {
-                        empList.forEach(employee => {
-                            csvContent += `"${employee}","${location}","${dateStr}"\n`;
-                        });
-                    });
-                    blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-                    filename = `farkad-assignments-${dateStr}.csv`;
-                    fileExtension = '.csv';
-                    acceptTypes = {'text/csv': ['.csv']};
-                    break;
-                    
-                case '3':
-                case 'טקסט':
-                case 'text':
-                    let textContent = `דוח הקצאות עובדים - ${new Date().toLocaleDateString('he-IL')}\n`;
-                    textContent += '='.repeat(50) + '\n\n';
-                    textContent += `סה"כ עובדים: ${employees.length}\n`;
-                    textContent += `סה"כ מקומות: ${locations.length}\n`;
-                    textContent += `סה"כ הקצאות: ${Object.values(assignments).reduce((sum, arr) => sum + arr.length, 0)}\n\n`;
-                    
-                    Object.entries(assignments).forEach(([location, empList]) => {
-                        textContent += `📍 ${location}:\n`;
-                        empList.forEach(employee => {
-                            textContent += `   • ${employee}\n`;
-                        });
-                        textContent += '\n';
-                    });
-                    
-                    blob = new Blob([textContent], { type: 'text/plain;charset=utf-8;' });
-                    filename = `farkad-report-${dateStr}.txt`;
-                    fileExtension = '.txt';
-                    acceptTypes = {'text/plain': ['.txt']};
-                    break;
-                    
-                default:
-                    showNotification('פורמט לא חוקי', 'error');
-                    return;
-            }
-            
-            // Check if the modern File System Access API is supported
-            if ('showSaveFilePicker' in window) {
-                try {
-                    showNotification('בחר מקום לשמירת הקובץ...', 'info');
-                    
-                    const fileHandle = await window.showSaveFilePicker({
-                        suggestedName: filename,
-                        types: [{
-                            description: `Farkad ${format === '1' ? 'Backup' : format === '2' ? 'Spreadsheet' : 'Report'} Files`,
-                            accept: acceptTypes
-                        }],
-                        excludeAcceptAllOption: false
-                    });
-                    
-                    const writable = await fileHandle.createWritable();
-                    await writable.write(blob);
-                    await writable.close();
-                    
-                    showNotification('🎉 הקובץ נשמר בהצלחה במקום שבחרת!');
-                    
-                } catch (error) {
-                    // User cancelled or error occurred
-                    if (error.name === 'AbortError') {
-                        showNotification('הייצוא בוטל', 'warning');
-                    } else {
-                        console.error('Save picker error:', error);
-                        showNotification('בעיה בשמירת הקובץ - משתמש בשיטה אחרת...', 'warning');
-                        // Fallback to traditional download
-                        traditionalDownload(blob, filename);
+                // Clear all assignments for this place
+                document.querySelectorAll('.time-cell').forEach(cell => {
+                    if (cell.textContent.trim() === placeName) {
+                        clearAssignment(cell);
                     }
-                }
-            } else {
-                // For browsers that don't support the File System Access API
-                showNotification('הדפדפן שלך לא תומך בבחירת מקום - הקובץ יישמר בתיקיית ההורדות', 'warning');
-                traditionalDownload(blob, filename);
+                });
+                
+                showManagePlacesModal();
+                autoSaveSchedule();
+                updateAssignmentSummary();
             }
         }
-        
-        function traditionalDownload(blob, filename) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showNotification('הקובץ הורד לתיקיית ההורדות');
-        }
-        function exportDataAdvanced() {
-            // Create a more user-friendly interface for choosing export options
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.7);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 1000;
-                direction: rtl;
-            `;
-            
-            const content = document.createElement('div');
-            content.style.cssText = `
-                background: white;
-                padding: 40px;
-                border-radius: 15px;
-                max-width: 500px;
-                width: 90%;
-                box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            `;
-            
-            content.innerHTML = `
-                <h3 style="margin-bottom: 30px; text-align: center; color: #2c3e50;">בחר אפשרויות ייצוא</h3>
-                
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 10px; font-weight: 600;">פורמט הקובץ:</label>
-                    <select id="exportFormat" style="width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 16px;">
-                        <option value="json">JSON - גיבוי מלא</option>
-                        <option value="csv">CSV - לאקסל</option>
-                        <option value="txt">טקסט - דוח קריא</option>
-                        <option value="html">HTML - דוח מעוצב</option>
-                    </select>
-                </div>
-                
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 10px; font-weight: 600;">שם הקובץ:</label>
-                    <input type="text" id="exportFilename" value="farkad-export-${new Date().toISOString().split('T')[0]}" style="width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 16px;">
-                </div>
-                
-                <div style="margin-bottom: 30px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 14px; color: #666;">
-                    💡 <strong>טיפ:</strong> בדפדפנים מתקדמים תוכל לבחור בדיוק היכן לשמור את הקובץ (שולחן העבודה, תיקייה מסוימת וכו').
-                </div>
-                
-                <div style="display: flex; gap: 15px; justify-content: center;">
-                    <button onclick="performExport()" style="padding: 12px 30px; background: linear-gradient(135deg, #27ae60, #229954); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 16px;">
-                        📥 ייצא עכשיו
-                    </button>
-                    <button onclick="this.closest('.modal').remove()" style="padding: 12px 30px; background: linear-gradient(135deg, #95a5a6, #7f8c8d); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 16px;">
-                        ביטול
-                    </button>
-                </div>
-            `;
-            
-            content.className = 'modal';
-            modal.appendChild(content);
-            document.body.appendChild(modal);
-            
-            // Close modal when clicking outside
-            modal.onclick = (e) => {
-                if (e.target === modal) {
-                    modal.remove();
+
+        // Summary and save functions
+        function updateAssignmentSummary() {
+            const counters = {};
+            let total = 0;
+            places.forEach(place => counters[place] = 0);
+
+            document.querySelectorAll('.time-cell').forEach(cell => {
+                const place = cell.textContent.trim();
+                if (place && counters.hasOwnProperty(place)) {
+                    counters[place]++;
+                    total++;
                 }
+            });
+
+            let summary = `إجمالي التوزيعات: ${total}<br>`;
+            for (const [place, count] of Object.entries(counters)) {
+                summary += `${place}: ${count} عامل<br>`;
+            }
+
+            document.getElementById('assignmentSummary').innerHTML = summary;
+        }
+
+        function autoSaveSchedule() {
+            const data = {
+                workers,
+                places,
+                assignments: []
             };
             
-            // Add the export function to the window object so it can be called from the button
-            window.performExport = async function() {
-                const format = document.getElementById('exportFormat').value;
-                const filename = document.getElementById('exportFilename').value;
-                
-                if (!filename.trim()) {
-                    alert('אנא הכנס שם קובץ');
-                    return;
-                }
-                
-                modal.remove();
-                
-                const data = {
-                    employees,
-                    locations,
-                    assignments,
-                    exportDate: new Date().toISOString(),
-                    totalEmployees: employees.length,
-                    totalLocations: locations.length,
-                    totalAssignments: Object.values(assignments).reduce((sum, arr) => sum + arr.length, 0)
-                };
-                
-                let blob, finalFilename, acceptTypes;
-                
-                switch(format) {
-                    case 'json':
-                        blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                        finalFilename = filename.endsWith('.json') ? filename : filename + '.json';
-                        acceptTypes = {'application/json': ['.json']};
-                        break;
-                        
-                    case 'csv':
-                        let csvContent = 'עובד,מקום עבודה,תאריך\n';
-                        Object.entries(assignments).forEach(([location, empList]) => {
-                            empList.forEach(employee => {
-                                csvContent += `"${employee}","${location}","${new Date().toLocaleDateString('he-IL')}"\n`;
-                            });
-                        });
-                        blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-                        finalFilename = filename.endsWith('.csv') ? filename : filename + '.csv';
-                        acceptTypes = {'text/csv': ['.csv']};
-                        break;
-                        
-                    case 'txt':
-                        let textContent = `דוח הקצאות עובדים - ${new Date().toLocaleDateString('he-IL')}\n`;
-                        textContent += '='.repeat(60) + '\n\n';
-                        textContent += `📊 סטטיסטיקות:\n`;
-                        textContent += `• סה"כ עובדים: ${employees.length}\n`;
-                        textContent += `• סה"כ מקומות: ${locations.length}\n`;
-                        textContent += `• סה"כ הקצאות: ${Object.values(assignments).reduce((sum, arr) => sum + arr.length, 0)}\n\n`;
-                        textContent += `📍 הקצאות מפורטות:\n`;
-                        textContent += '-'.repeat(30) + '\n';
-                        
-                        Object.entries(assignments).forEach(([location, empList]) => {
-                            textContent += `\n🏢 ${location}:\n`;
-                            empList.forEach(employee => {
-                                textContent += `   👤 ${employee}\n`;
-                            });
-                        });
-                        
-                        blob = new Blob([textContent], { type: 'text/plain;charset=utf-8;' });
-                        finalFilename = filename.endsWith('.txt') ? filename : filename + '.txt';
-                        acceptTypes = {'text/plain': ['.txt']};
-                        break;
-                        
-                    case 'html':
-                        let htmlContent = `
-<!DOCTYPE html>
-<html dir="rtl" lang="he">
-<head>
-    <meta charset="UTF-8">
-    <title>דוח הקצאות עובדים - Farkad</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; direction: rtl; }
-        .header { background: #3498db; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-        .stats { display: flex; gap: 20px; margin-bottom: 20px; }
-        .stat-card { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; flex: 1; }
-        .location { background: white; border: 2px solid #e9ecef; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
-        .location h3 { color: #2c3e50; margin-bottom: 10px; }
-        .employee { background: #3498db; color: white; padding: 5px 10px; border-radius: 5px; display: inline-block; margin: 2px; }
-        @media print { body { margin: 0; } }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>📊 דוח הקצאות עובדים</h1>
-        <p>תאריך: ${new Date().toLocaleDateString('he-IL')}</p>
-    </div>
-    
-    <div class="stats">
-        <div class="stat-card">
-            <h3>${employees.length}</h3>
-            <p>עובדים</p>
-        </div>
-        <div class="stat-card">
-            <h3>${locations.length}</h3>
-            <p>מקומות</p>
-        </div>
-        <div class="stat-card">
-            <h3>${Object.values(assignments).reduce((sum, arr) => sum + arr.length, 0)}</h3>
-            <p>הקצאות</p>
-        </div>
-    </div>
-    
-    <div class="assignments">
-                        `;
-                        
-                        Object.entries(assignments).forEach(([location, empList]) => {
-                            htmlContent += `
-        <div class="location">
-            <h3>🏢 ${location}</h3>
-            <div>
-                            `;
-                            empList.forEach(employee => {
-                                htmlContent += `<span class="employee">👤 ${employee}</span> `;
-                            });
-                            htmlContent += `
-            </div>
-        </div>
-                            `;
-                        });
-                        
-                        htmlContent += `
-    </div>
-    
-    <div style="margin-top: 30px; text-align: center; color: #666; font-size: 12px;">
-        נוצר על ידי מערכת Farkad | ${new Date().toLocaleString('he-IL')}
-    </div>
-</body>
-</html>
-                        `;
-                        
-                        blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
-                        finalFilename = filename.endsWith('.html') ? filename : filename + '.html';
-                        acceptTypes = {'text/html': ['.html']};
-                        break;
-                }
-                
-                // Try to use the modern file picker
-                if ('showSaveFilePicker' in window) {
-                    try {
-                        const fileHandle = await window.showSaveFilePicker({
-                            suggestedName: finalFilename,
-                            types: [{
-                                description: 'Farkad Export Files',
-                                accept: acceptTypes
-                            }]
-                        });
-                        
-                        const writable = await fileHandle.createWritable();
-                        await writable.write(blob);
-                        await writable.close();
-                        
-                        showNotification('🎉 הקובץ נשמר בהצלחה במקום שבחרת!');
-                        
-                    } catch (error) {
-                        if (error.name !== 'AbortError') {
-                            traditionalDownload(blob, finalFilename);
+            const cells = document.querySelectorAll('.time-cell');
+            cells.forEach((cell, index) => {
+                if (cell.textContent.trim()) {
+                    let colorClass = '';
+                    for (let i = 0; i < 7; i++) {
+                        if (cell.classList.contains('place-color-' + i)) {
+                            colorClass = 'place-color-' + i;
+                            break;
                         }
                     }
-                } else {
-                    // Fallback for older browsers
-                    showNotification('הדפדפן שלך לא תומך בבחירת מקום מותאם אישית - הקובץ יישמר בתיקיית ההורדות', 'info');
-                    traditionalDownload(blob, finalFilename);
+                    data.assignments.push({ 
+                        index, 
+                        value: cell.textContent.trim(),
+                        colorClass: colorClass 
+                    });
                 }
-            };
-        }
-
-        function clearAll() {
-            if (confirm('האם אתה בטוח שברצונך למחוק את כל הנתונים? פעולה זו אינה ניתנת לביטול.')) {
-                employees = [];
-                locations = [];
-                assignments = {};
-                updateDisplay();
-                saveData();
-                showNotification('כל הנתונים נמחקו');
-            }
-        }
-
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = 'notification show';
+            });
             
-            switch(type) {
-                case 'error':
-                    notification.style.background = '#e74c3c';
-                    break;
-                case 'info':
-                    notification.style.background = '#3498db';
-                    break;
-                case 'warning':
-                    notification.style.background = '#f39c12';
-                    break;
-                default:
-                    notification.style.background = '#27ae60';
+            const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileName.endsWith(".json") ? fileName : fileName + ".json";
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearAssignments() {
+            document.querySelectorAll('.time-cell').forEach(cell => {
+                clearAssignment(cell);
+            });
+            updateAssignmentSummary();
+        }
+
+        function resetLocalStorage() {
+            if (confirm("هل أنت متأكد من حذف جميع البيانات؟")) {
+                localStorage.removeItem("scheduleData");
+                location.reload();
             }
+        }
+
+        // Print function
+        function printSchedule() {
+            const summary = document.getElementById('assignmentSummary');
+            const originalDisplay = summary.style.display;
+            summary.style.display = 'none';
             
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-        const DATABASE_CONFIG = {
-            // Example for MySQL/PostgreSQL via API
-            apiUrl: 'https://your-api-domain.com/api',
-            // Example for Firebase
-            firebaseConfig: {
-                // Add your Firebase config here
-            },
-            // Example for Supabase
-            supabaseUrl: 'https://your-project.supabase.co',
-            supabaseKey: 'your-anon-key'
-        };
-
-        // Database functions
-        async function syncWithDatabase() {
-            try {
-                showNotification('מסנכרן עם מסד הנתונים...', 'info');
-                
-                // Option 1: Save to database
-                const action = confirm('לחץ OK לשמור במסד הנתונים, או Cancel לטעון ממסד הנתונים');
-                
-                if (action) {
-                    await saveToDatabase();
-                } else {
-                    await loadFromDatabase();
-                }
-            } catch (error) {
-                console.error('Database sync error:', error);
-                showNotification('שגיאה בסנכרון עם מסד הנתונים', 'error');
-            }
+            window.print();
+            
+            summary.style.display = originalDisplay;
         }
 
-        async function saveToDatabase() {
-            const data = {
-                employees,
-                locations,
-                assignments,
-                lastUpdated: new Date().toISOString(),
-                userId: 'default' // You can implement user authentication
-            };
-
-            // Example API call - replace with your actual database API
+        // Export to Excel function
+        function exportToExcel() {
             try {
-                const response = await fetch(`${DATABASE_CONFIG.apiUrl}/save-schedule`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        // Add authentication headers if needed
-                        // 'Authorization': 'Bearer your-token'
-                    },
-                    body: JSON.stringify(data)
+                const wb = XLSX.utils.book_new();
+                
+                // Prepare data for the main schedule sheet
+                const scheduleData = [];
+                const headerRow = ['العامل'];
+                days.forEach(day => headerRow.push(day));
+                scheduleData.push(headerRow);
+                
+                // Add worker rows
+                const cells = document.querySelectorAll('.time-cell');
+                let cellIndex = 0;
+                
+                workers.forEach(worker => {
+                    const row = [typeof worker === 'string' ? worker : worker.name];
+                    
+                    days.forEach(() => {
+                        const cellValue = cells[cellIndex] ? cells[cellIndex].textContent.trim() : '';
+                        row.push(cellValue);
+                        cellIndex++;
+                    });
+                    
+                    scheduleData.push(row);
                 });
-
-                if (response.ok) {
-                    showNotification('הנתונים נשמרו במסד הנתונים בהצלחה');
-                } else {
-                    throw new Error('Failed to save to database');
-                }
-            } catch (error) {
-                // Fallback: show example SQL queries for manual database setup
-                showDatabaseInstructions();
-            }
-        }
-
-        async function loadFromDatabase() {
-            try {
-                const response = await fetch(`${DATABASE_CONFIG.apiUrl}/load-schedule`, {
-                    method: 'GET',
-                    headers: {
-                        // Add authentication headers if needed
-                        // 'Authorization': 'Bearer your-token'
+                
+                // Create worksheet for schedule
+                const ws1 = XLSX.utils.aoa_to_sheet(scheduleData);
+                const colWidths = [{ wch: 20 }];
+                days.forEach(() => colWidths.push({ wch: 15 }));
+                ws1['!cols'] = colWidths;
+                XLSX.utils.book_append_sheet(wb, ws1, 'جدول المناوبات');
+                
+                // Create summary sheet
+                const summaryData = [['المكان', 'عدد العمال']];
+                const counters = {};
+                places.forEach(place => counters[place] = 0);
+                
+                document.querySelectorAll('.time-cell').forEach(cell => {
+                    const place = cell.textContent.trim();
+                    if (place && counters.hasOwnProperty(place)) {
+                        counters[place]++;
                     }
                 });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    employees = data.employees || [];
-                    locations = data.locations || [];
-                    assignments = data.assignments || {};
-                    updateDisplay();
-                    showNotification('הנתונים נטענו ממסד הנתונים בהצלחה');
-                } else {
-                    throw new Error('Failed to load from database');
+                
+                let total = 0;
+                for (const [place, count] of Object.entries(counters)) {
+                    summaryData.push([place, count]);
+                    total += count;
                 }
+                summaryData.push(['المجموع', total]);
+                
+                const ws2 = XLSX.utils.aoa_to_sheet(summaryData);
+                ws2['!cols'] = [{ wch: 20 }, { wch: 15 }];
+                XLSX.utils.book_append_sheet(wb, ws2, 'الملخص');
+                
+                // Create workers details sheet
+                const workersData = [['الاسم', 'رقم الهوية', 'رقم الهاتف']];
+                workers.forEach(worker => {
+                    if (typeof worker === 'string') {
+                        workersData.push([worker, '', '']);
+                    } else {
+                        workersData.push([worker.name, worker.id, worker.phone]);
+                    }
+                });
+                
+                const ws3 = XLSX.utils.aoa_to_sheet(workersData);
+                ws3['!cols'] = [{ wch: 20 }, { wch: 15 }, { wch: 15 }];
+                XLSX.utils.book_append_sheet(wb, ws3, 'بيانات العمال');
+                
+                // Generate filename with current date
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('ar-EG').replace(/\//g, '-');
+                const filename = `جدول_المناوبات_${dateStr}.xlsx`;
+                
+                // Save file
+                XLSX.writeFile(wb, filename);
+                alert('✅ تم تصدير الملف بنجاح!');
+                
             } catch (error) {
-                showNotification('לא ניתן לטעון ממסד הנתונים - משתמש בנתונים מקומיים', 'error');
+                console.error('Export error:', error);
+                alert('❌ حدث خطأ أثناء تصدير الملف');
             }
         }
 
-        function showDatabaseInstructions() {
-            const instructions = `
-להגדרת מסד הנתונים שלך, צור טבלה עם השאילתה הבאה:
-
-CREATE TABLE farkad_schedules (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    employees JSON,
-    locations JSON,
-    assignments JSON,
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    user_id VARCHAR(50) DEFAULT 'default'
-);
-
-או עבור PostgreSQL:
-CREATE TABLE farkad_schedules (
-    id SERIAL PRIMARY KEY,
-    employees JSONB,
-    locations JSONB,
-    assignments JSONB,
-    last_updated TIMESTAMP DEFAULT NOW(),
-    user_id VARCHAR(50) DEFAULT 'default'
-);
-
-עדכן את DATABASE_CONFIG בקוד עם כתובת ה-API שלך.
-            `;
-            
-            // Create a modal to show the instructions
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 1000;
-            `;
-            
-            const content = document.createElement('div');
-            content.style.cssText = `
-                background: white;
-                padding: 30px;
-                border-radius: 10px;
-                max-width: 600px;
-                max-height: 80vh;
-                overflow-y: auto;
-                direction: ltr;
-            `;
-            
-            content.innerHTML = `
-                <h3 style="margin-bottom: 20px; text-align: center;">הגדרת מסד נתונים</h3>
-                <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; font-size: 12px; overflow-x: auto;">${instructions}</pre>
-                <button onclick="this.parentElement.parentElement.remove()" style="display: block; margin: 20px auto; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">סגור</button>
-            `;
-            
-            modal.appendChild(content);
-            document.body.appendChild(modal);
-            
-            modal.onclick = (e) => {
-                if (e.target === modal) {
-                    modal.remove();
+        // Initialize on page load
+        window.onload = () => {
+            const saved = localStorage.getItem("scheduleData");
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    workers.push(...(data.workers || []));
+                    places.push(...(data.places || []));
+                    generateCalendar();
+                    
+                    const cells = document.querySelectorAll('.time-cell');
+                    if (data.assignments) {
+                        data.assignments.forEach(a => {
+                            if (cells[a.index]) {
+                                cells[a.index].textContent = a.value;
+                                cells[a.index].classList.add('assigned');
+                                if (a.colorClass) {
+                                    cells[a.index].classList.add(a.colorClass);
+                                }
+                            }
+                        });
+                    }
+                    
+                    updateAssignmentSummary();
+                } catch (error) {
+                    console.error('Error loading saved data:', error);
+                    generateCalendar();
                 }
-            };
-        }
-
-        // Add keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey || e.metaKey) {
-                switch(e.key) {
-                    case 's':
-                        e.preventDefault();
-                        saveData();
-                        break;
-                    case 'e':
-                        e.preventDefault();
-                        exportData();
-                        break;
-                }
+            } else {
+                generateCalendar();
             }
-        });
+        };
     </script>
 </body>
-</html>
+</html>trim()) {
+                    let colorClass = '';
+                    for (let i = 0; i < 7; i++) {
+                        if (cell.classList.contains('place-color-' + i)) {
+                            colorClass = 'place-color-' + i;
+                            break;
+                        }
+                    }
+                    data.assignments.push({ 
+                        index, 
+                        value: cell.textContent.trim(),
+                        colorClass: colorClass 
+                    });
+                }
+            });
+            
+            localStorage.setItem("scheduleData", JSON.stringify(data));
+            if (typeof saveScheduleToFirebase === 'function') {
+                saveScheduleToFirebase(data);
+            }
+            updateAssignmentSummary();
+        }
+
+        function loadSchedule(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    workers.length = 0;
+                    places.length = 0;
+                    workers.push(...data.workers);
+                    places.push(...data.places);
+                    generateCalendar();
+                    
+                    const cells = document.querySelectorAll('.time-cell');
+                    data.assignments.forEach(a => {
+                        if (cells[a.index]) {
+                            cells[a.index].textContent = a.value;
+                            cells[a.index].classList.add('assigned');
+                            if (a.colorClass) {
+                                cells[a.index].classList.add(a.colorClass);
+                            }
+                        }
+                    });
+                    
+                    updateAssignmentSummary();
+                    autoSaveSchedule();
+                    alert("تم تحميل الملف بنجاح!");
+                } catch (error) {
+                    alert("خطأ في قراءة الملف!");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function saveSchedule() {
+            const fileName = prompt("أدخل اسم الملف للحفظ:", "جدول_المناوبات.json");
+            if (!fileName) return;
+
+            const data = {
+                workers,
+                places,
+                assignments: []
+            };
+            
+            const cells = document.querySelectorAll('.time-cell');
+            cells.forEach((cell, index) => {
+                if (cell.textContent.
