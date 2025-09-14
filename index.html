@@ -3,106 +3,60 @@
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>מערכת הקצאת עובדים</title>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 20px;
-      color: #333;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 20px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-    }
-    .header {
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-      padding: 30px;
-      text-align: center;
-      color: white;
-    }
-    .header h1 { margin: 0 0 10px 0; font-size: 2rem; }
-    .controls, .instructions {
-      padding: 1rem 2rem;
-      display: flex; flex-wrap: wrap;
-      gap: 10px; justify-content: center;
-    }
-    .calendar-container { overflow-x: auto; margin: 2rem; }
-    .calendar-grid { display: grid; min-width: 800px; background: #e9ecef; border-radius: 12px; overflow: hidden; }
-    .calendar-grid .header-cell, 
-    .calendar-grid .name-cell, 
-    .calendar-grid .time-cell {
-      padding: 1rem; border: 1px solid #ccc;
-      text-align: center; cursor: pointer; background: white;
-      transition: background 0.2s;
-    }
-    .calendar-grid .time-cell:hover { background: #d6f0ff; }
-    .calendar-grid .time-cell.assigned { background: #d4edda; border-color: #28a745; }
-    .modal { display: none; position: fixed; top:0; left:0; right:0; bottom:0;
-      background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content {
-      background: #2d2d2d; color: white; padding: 2rem;
-      border-radius: 10px; width: 300px; max-width: 90%;
-    }
-    .modal-content h3 { margin-top: 0; text-align: center; }
-    .place-choice { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 1rem; }
-    .place-btn { border: 2px solid transparent; padding: 0.5rem 1rem; border-radius: 8px;
-      background: #ffffff; cursor: pointer; font-weight: bold; color: #333; }
-    .place-btn:hover { border-color: #0056b3; background: #e2e6ea; }
-    button { margin: 0.25rem; padding: 0.6rem 1.4rem; border: none; border-radius: 12px;
-      cursor: pointer; font-weight: bold; transition: background 0.3s, transform 0.1s;
-      background: #007bff; color: white; }
-    button:hover { background: #0056b3; transform: translateY(-1px); }
-    .btn-secondary { background: #6c757d; }
-    .btn-secondary:hover { background: #5a6268; }
-    .btn-success { background: #28a745; }
-    .btn-success:hover { background: #218838; }
-    .btn-info { background: #17a2b8; }
-    .btn-info:hover { background: #138496; }
-    .header-cell { background: #343a40 !important; color: #fff !important; font-weight: bold; }
-    .name-cell { background: #212529 !important; color: #fff !important; font-weight: bold; }
-    #assignmentSummary {
-      text-align: center; margin-top: 20px; font-weight: bold;
-      padding: 1rem; background: rgba(0, 123, 255, 0.1); border-radius: 8px;
-    }
-    input[type="text"] {
-      width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 8px;
-      margin-bottom: 0.5rem; font-size: 1rem;
-    }
-    input:focus { outline: none; border-color: #007bff; }
-    .worker-row, .place-row {
-      display: flex; justify-content: space-between; align-items: center;
-      background: #333; padding: 0.5rem; border-radius: 6px; color: white; margin-bottom: 0.5rem;
-    }
-    @media print {
-      body { background: white !important; padding: 0 !important; }
-      .container { box-shadow: none !important; background: white !important; border-radius: 0 !important; }
-      .controls, .instructions, #assignmentSummary { display: none !important; }
-      .header { background: #333 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .calendar-grid { background: white !important; }
-    }
-  </style>
+  <title>מערכת ניהול משמרות</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📅 מערכת ניהול משמרות</h1>
+      <p>ניהול משמרות עובדים ומקומות עבודה</p>
+    </div>
+
+    <div class="controls">
+      <button onclick="saveSchedule()">💾 שמור קובץ</button>
+      <input type="file" id="fileInput" accept=".json" onchange="loadSchedule(event)" style="display:none"/>
+      <button onclick="document.getElementById('fileInput').click()">📂 טען קובץ</button>
+      <button onclick="showAddPlaceModal()">➕ הוסף מקום</button>
+      <button onclick="showAddWorkerModal()">👤 הוסף עובד</button>
+      <button onclick="showManagePlacesModal()">⚙️ ניהול מקומות</button>
+      <button onclick="showManageWorkersModal()">👥 ניהול עובדים</button>
+      <button class="btn-success" onclick="printSchedule()">🖨️ הדפסה</button>
+      <button class="btn-info" onclick="exportToExcel()">📊 יצא ל-Excel</button>
+      <button class="btn-secondary" onclick="clearAssignments()">🗑️ נקה הקצאות</button>
+      <button class="btn-secondary" onclick="resetLocalStorage()">🔄 אפס נתונים</button>
+    </div>
+
+    <div class="calendar-container">
+      <div class="calendar-grid" id="calendar"></div>
+    </div>
+
+    <div id="assignmentSummary"></div>
+
+    <div class="instructions">
+      <h3>📌 הוראות שימוש</h3>
+      <p>לחץ על תא כדי לבחור מקום עבודה. לחץ שוב כדי להסיר הקצאה. השתמש בכפתורים כדי להוסיף/לנהל עובדים ומקומות.</p>
+    </div>
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script>
     let workers = [];
     let places = [];
     let assignments = {};
+    const days = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
 
     function saveSchedule() {
       const data = { workers, places, assignments };
       const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = "schedule.json"; a.click();
+      a.href = url;
+      a.download = "schedule.json";
+      a.click();
       URL.revokeObjectURL(url);
     }
+
     function loadSchedule(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -116,17 +70,21 @@
       };
       reader.readAsText(file);
     }
-    function printSchedule() { window.print(); }
+
+    function printSchedule() {
+      window.print();
+    }
+
     function exportToExcel() {
-      const ws_data = [["עובד", ...places]];
+      const ws_data = [["עובד", ...days]];
       workers.forEach(w => {
         const row = [w.name];
-        places.forEach((p, i) => {
+        days.forEach((d, di) => {
           let assigned = "";
           for (let key in assignments) {
-            if (assignments[key] === i) {
+            if (assignments[key] === di) {
               const [wid, day] = key.split("-");
-              if (wid == workers.indexOf(w)) assigned = p;
+              if (wid == workers.indexOf(w)) assigned = places[assignments[key]];
             }
           }
           row.push(assigned);
@@ -138,48 +96,71 @@
       XLSX.utils.book_append_sheet(wb, ws, "לו\"ז");
       XLSX.writeFile(wb, "schedule.xlsx");
     }
-    function clearAssignments() { assignments = {}; renderCalendar(); }
-    function resetLocalStorage() {
-      workers = []; places = []; assignments = {}; renderCalendar();
+
+    function clearAssignments() {
+      assignments = {};
+      renderCalendar();
     }
+
+    function resetLocalStorage() {
+      workers = [];
+      places = [];
+      assignments = {};
+      renderCalendar();
+    }
+
     function renderCalendar() {
       const calendar = document.getElementById("calendar");
       calendar.innerHTML = "";
-      const cols = places.length + 1;
+      const cols = days.length + 1;
       calendar.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+      // Header row
       const headerRow = document.createElement("div");
       headerRow.className = "header-cell";
       headerRow.textContent = "עובד";
       calendar.appendChild(headerRow);
-      places.forEach(p => {
+      days.forEach(d => {
         const cell = document.createElement("div");
-        cell.className = "header-cell"; cell.textContent = p;
+        cell.className = "header-cell";
+        cell.textContent = d;
         calendar.appendChild(cell);
       });
+
+      // Workers rows
       workers.forEach((w, wi) => {
         const nameCell = document.createElement("div");
         nameCell.className = "name-cell";
         nameCell.textContent = w.name;
         calendar.appendChild(nameCell);
-        places.forEach((p, pi) => {
+
+        days.forEach((d, di) => {
           const cell = document.createElement("div");
           cell.className = "time-cell";
-          const key = `${wi}-${pi}`;
+          const key = `${wi}-${di}`;
           if (assignments[key] !== undefined) {
             cell.classList.add("assigned");
             cell.textContent = places[assignments[key]];
           }
           cell.onclick = () => {
             if (assignments[key] !== undefined) {
-              delete assignments[key]; cell.classList.remove("assigned"); cell.textContent = "";
+              delete assignments[key];
+              cell.classList.remove("assigned");
+              cell.textContent = "";
             } else {
-              assignments[key] = pi; cell.classList.add("assigned"); cell.textContent = p;
+              const choice = prompt("בחר מקום עבודה: " + places.join(", "));
+              if (choice && places.includes(choice)) {
+                assignments[key] = places.indexOf(choice);
+                cell.classList.add("assigned");
+                cell.textContent = choice;
+              }
             }
           };
           calendar.appendChild(cell);
         });
       });
     }
+
     function showAddWorkerModal() {
       const name = prompt("שם העובד (חובה):");
       if (!name) return;
@@ -188,45 +169,24 @@
       workers.push({ name, id, phone });
       renderCalendar();
     }
+
     function showAddPlaceModal() {
       const place = prompt("שם מקום העבודה:");
-      if (place) { places.push(place); renderCalendar(); }
+      if (place) {
+        places.push(place);
+        renderCalendar();
+      }
     }
+
     function showManageWorkersModal() {
       alert("ניהול עובדים יתוסף כאן (ניתן לערוך/למחוק עובדים)");
     }
+
     function showManagePlacesModal() {
       alert("ניהול מקומות יתוסף כאן (ניתן לערוך/למחוק מקומות)");
     }
+
+    window.onload = renderCalendar;
   </script>
-</head>
-<body onload="renderCalendar()">
-  <div class="container">
-    <div class="header">
-      <h1>🏢 מערכת ניהול משמרות</h1>
-      <p>ניהול משמרות עובדים ומקומות עבודה</p>
-    </div>
-    <div class="controls">
-      <button onclick="saveSchedule()">💾 שמור קובץ</button>
-      <input accept=".json" id="fileInput" onchange="loadSchedule(event)" style="display:none" type="file"/>
-      <button onclick="document.getElementById('fileInput').click()">📂 טען קובץ</button>
-      <button onclick="showAddPlaceModal()">➕ הוסף מקום</button>
-      <button onclick="showAddWorkerModal()">👤 הוסף עובד</button>
-      <button onclick="showManagePlacesModal()">⚙️ ניהול מקומות</button>
-      <button onclick="showManageWorkersModal()">👥 ניהול עובדים</button>
-      <button class="btn-success" onclick="printSchedule()">🖨️ הדפסה</button>
-      <button class="btn-info" onclick="exportToExcel()">📊 יצא ל-Excel</button>
-      <button class="btn-secondary" onclick="clearAssignments()">🗑️ נקה הקצאות</button>
-      <button class="btn-secondary" onclick="resetLocalStorage()">🔄 אפס נתונים</button>
-    </div>
-    <div class="calendar-container">
-      <div class="calendar-grid" id="calendar"></div>
-    </div>
-    <div id="assignmentSummary"></div>
-    <div class="instructions">
-      <h3>📌 הוראות שימוש</h3>
-      <p>לחץ על תא כדי לבחור מקום עבודה. לחץ שוב כדי להסיר הקצאה. השתמש בכפתורים כדי להוסיף/לנהל עובדים ומקומות.</p>
-    </div>
-  </div>
 </body>
 </html>
