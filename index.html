@@ -1,192 +1,1001 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>מערכת ניהול משמרות</title>
-  <link rel="stylesheet" href="style.css"/>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>📅 מערכת ניהול משמרות</h1>
-      <p>ניהול משמרות עובדים ומקומות עבודה</p>
-    </div>
-
-    <div class="controls">
-      <button onclick="saveSchedule()">💾 שמור קובץ</button>
-      <input type="file" id="fileInput" accept=".json" onchange="loadSchedule(event)" style="display:none"/>
-      <button onclick="document.getElementById('fileInput').click()">📂 טען קובץ</button>
-      <button onclick="showAddPlaceModal()">➕ הוסף מקום</button>
-      <button onclick="showAddWorkerModal()">👤 הוסף עובד</button>
-      <button onclick="showManagePlacesModal()">⚙️ ניהול מקומות</button>
-      <button onclick="showManageWorkersModal()">👥 ניהול עובדים</button>
-      <button class="btn-success" onclick="printSchedule()">🖨️ הדפסה</button>
-      <button class="btn-info" onclick="exportToExcel()">📊 יצא ל-Excel</button>
-      <button class="btn-secondary" onclick="clearAssignments()">🗑️ נקה הקצאות</button>
-      <button class="btn-secondary" onclick="resetLocalStorage()">🔄 אפס נתונים</button>
-    </div>
-
-    <div class="calendar-container">
-      <div class="calendar-grid" id="calendar"></div>
-    </div>
-
-    <div id="assignmentSummary"></div>
-
-    <div class="instructions">
-      <h3>📌 הוראות שימוש</h3>
-      <p>לחץ על תא כדי לבחור מקום עבודה. לחץ שוב כדי להסיר הקצאה. השתמש בכפתורים כדי להוסיף/לנהל עובדים ומקומות.</p>
-    </div>
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script>
-    let workers = [];
-    let places = [];
-    let assignments = {};
-    const days = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
-
-    function saveSchedule() {
-      const data = { workers, places, assignments };
-      const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "schedule.json";
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function loadSchedule(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        const data = JSON.parse(e.target.result);
-        workers = data.workers || [];
-        places = data.places || [];
-        assignments = data.assignments || {};
-        renderCalendar();
-      };
-      reader.readAsText(file);
-    }
-
-    function printSchedule() {
-      window.print();
-    }
-
-    function exportToExcel() {
-      const ws_data = [["עובד", ...days]];
-      workers.forEach(w => {
-        const row = [w.name];
-        days.forEach((d, di) => {
-          let assigned = "";
-          for (let key in assignments) {
-            if (assignments[key] === di) {
-              const [wid, day] = key.split("-");
-              if (wid == workers.indexOf(w)) assigned = places[assignments[key]];
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>מערכת הקצאת עובדים</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+        
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2rem;
+        }
+        
+        .header p {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+        
+        .controls, .instructions {
+            padding: 1rem 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .calendar-container {
+            overflow-x: auto;
+            margin: 2rem;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            min-width: 800px;
+            background: #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .calendar-grid .header-cell, 
+        .calendar-grid .name-cell, 
+        .calendar-grid .time-cell {
+            padding: 1rem;
+            border: 1px solid #ccc;
+            text-align: center;
+            cursor: pointer;
+            background: white;
+            transition: background 0.2s;
+        }
+        
+        .calendar-grid .time-cell:hover {
+            background: #d6f0ff;
+        }
+        
+        .calendar-grid .time-cell.assigned {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: #2d2d2d;
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 300px;
+            max-width: 90%;
+        }
+        
+        .modal-content h3 {
+            margin-top: 0;
+            text-align: center;
+        }
+        
+        .place-choice {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+        
+        .place-btn {
+            border: 2px solid transparent;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            background: #ffffff;
+            cursor: pointer;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .place-btn:hover {
+            border-color: #0056b3;
+            background: #e2e6ea;
+        }
+        
+        button {
+            margin: 0.25rem;
+            padding: 0.6rem 1.4rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s, transform 0.1s;
+            background: #007bff;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #138496;
+        }
+        
+        .header-cell {
+            background: #343a40 !important;
+            color: #fff !important;
+            font-weight: bold;
+        }
+        
+        .name-cell {
+            background: #212529 !important;
+            color: #fff !important;
+            font-weight: bold;
+        }
+        
+        .place-color-0 { background-color: #d1ecf1 !important; border-color: #0c5460 !important; }
+        .place-color-1 { background-color: #d4edda !important; border-color: #155724 !important; }
+        .place-color-2 { background-color: #fff3cd !important; border-color: #856404 !important; }
+        .place-color-3 { background-color: #f8d7da !important; border-color: #721c24 !important; }
+        .place-color-4 { background-color: #e2e3e5 !important; border-color: #6c757d !important; }
+        .place-color-5 { background-color: #cfe2ff !important; border-color: #084298 !important; }
+        .place-color-6 { background-color: #e8daef !important; border-color: #512e5f !important; }
+        
+        #assignmentSummary {
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+            padding: 1rem;
+            background: rgba(0, 123, 255, 0.1);
+            border-radius: 8px;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.8);
+            margin: 2rem;
+            border-radius: 12px;
+        }
+        
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .instructions p {
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .worker-row, .place-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #333;
+            padding: 0.5rem;
+            border-radius: 6px;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+        
+        .worker-row span, .place-row span {
+            font-weight: bold;
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
             }
-          }
-          row.push(assigned);
-        });
-        ws_data.push(row);
-      });
-      const ws = XLSX.utils.aoa_to_sheet(ws_data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "לו\"ז");
-      XLSX.writeFile(wb, "schedule.xlsx");
-    }
+            
+            .container {
+                box-shadow: none !important;
+                background: white !important;
+                border-radius: 0 !important;
+            }
+            
+            .controls, .instructions {
+                display: none !important;
+            }
+            
+            .header {
+                background: #333 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .calendar-grid {
+                background: white !important;
+            }
+            
+            .header-cell, .name-cell {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .time-cell.assigned {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            #assignmentSummary {
+                display: none !important;
+            }
+        }
+    </style>
 
-    function clearAssignments() {
-      assignments = {};
-      renderCalendar();
-    }
+    <!-- SheetJS library for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-    function resetLocalStorage() {
-      workers = [];
-      places = [];
-      assignments = {};
-      renderCalendar();
-    }
+    <!-- Firebase Auth Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-    function renderCalendar() {
-      const calendar = document.getElementById("calendar");
-      calendar.innerHTML = "";
-      const cols = days.length + 1;
-      calendar.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        const firebaseConfig = {
+            authDomain: "farkad-scheduler.firebaseapp.com",
+            projectId: "farkad-scheduler",
+            storageBucket: "farkad-scheduler.firebasestorage.app",
+            messagingSenderId: "71149615141",
+            appId: "1:71149615141:web:97eac63fe0c39d4831a7cc",
+            measurementId: "G-41H0PK4LMR"
+        };
 
-      // Header row
-      const headerRow = document.createElement("div");
-      headerRow.className = "header-cell";
-      headerRow.textContent = "עובד";
-      calendar.appendChild(headerRow);
-      days.forEach(d => {
-        const cell = document.createElement("div");
-        cell.className = "header-cell";
-        cell.textContent = d;
-        calendar.appendChild(cell);
-      });
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getFirestore();
 
-      // Workers rows
-      workers.forEach((w, wi) => {
-        const nameCell = document.createElement("div");
-        nameCell.className = "name-cell";
-        nameCell.textContent = w.name;
-        calendar.appendChild(nameCell);
+        // Auth check on page load
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                alert("يجب تسجيل الدخول أولاً");
+                window.location.href = "login.html";
+                return;
+            }
 
-        days.forEach((d, di) => {
-          const cell = document.createElement("div");
-          cell.className = "time-cell";
-          const key = `${wi}-${di}`;
-          if (assignments[key] !== undefined) {
-            cell.classList.add("assigned");
-            cell.textContent = places[assignments[key]];
-          }
-          cell.onclick = () => {
-            if (assignments[key] !== undefined) {
-              delete assignments[key];
-              cell.classList.remove("assigned");
-              cell.textContent = "";
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (!userDoc.exists() || !userDoc.data().paid) {
+                alert("حسابك غير مفعل. تواصل مع الدعم الفني.");
+                window.location.href = "login.html";
             } else {
-              const choice = prompt("בחר מקום עבודה: " + places.join(", "));
-              if (choice && places.includes(choice)) {
-                assignments[key] = places.indexOf(choice);
-                cell.classList.add("assigned");
-                cell.textContent = choice;
-              }
+                console.log("المستخدم مسجل الدخول ومعتمد");
             }
-          };
-          calendar.appendChild(cell);
         });
-      });
-    }
 
-    function showAddWorkerModal() {
-      const name = prompt("שם העובד (חובה):");
-      if (!name) return;
-      const id = prompt("תעודת זהות (לא חובה):") || "";
-      const phone = prompt("טלפון (לא חובה):") || "";
-      workers.push({ name, id, phone });
-      renderCalendar();
-    }
+        // Save schedule to Firestore
+        window.saveScheduleToFirebase = async function(data) {
+            const user = auth.currentUser;
+            if (!user) return;
+            const userDoc = doc(db, "schedules", user.uid);
+            await setDoc(userDoc, data);
+            alert("تم حفظ الجدول في السحابة بنجاح");
+        };
+    </script>
+</head>
 
-    function showAddPlaceModal() {
-      const place = prompt("שם מקום העבודה:");
-      if (place) {
-        places.push(place);
-        renderCalendar();
-      }
-    }
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 نظام إدارة المناوبات</h1>
+            <p>إدارة مناوبات العمال وأماكن العمل</p>
+        </div>
+        
+        <div class="controls">
+            <button onclick="saveSchedule()">💾 حفظ الملف</button>
+            <input accept=".json" id="fileInput" onchange="loadSchedule(event)" style="display:none" type="file"/>
+            <button onclick="document.getElementById('fileInput').click()">📂 تحميل</button>
+            <button onclick="showAddPlaceModal()">➕ إضافة مكان</button>
+            <button onclick="showAddWorkerModal()">👤 إضافة عامل</button>
+            <button onclick="showManagePlacesModal()">⚙️ إدارة الأماكن</button>
+            <button onclick="showManageWorkersModal()">👥 إدارة العمال</button>
+            <button class="btn-success" onclick="printSchedule()">🖨️ طباعة</button>
+            <button class="btn-info" onclick="exportToExcel()">📊 تصدير Excel</button>
+            <button class="btn-secondary" onclick="clearAssignments()">🗑️ مسح التوزيعات</button>
+            <button class="btn-secondary" onclick="resetLocalStorage()">🔄 إعادة تعيين</button>
+        </div>
 
-    function showManageWorkersModal() {
-      alert("ניהול עובדים יתוסף כאן (ניתן לערוך/למחוק עובדים)");
-    }
+        <div class="calendar-container">
+            <div class="calendar-grid" id="calendar"></div>
+        </div>
+        
+        <div id="assignmentSummary"></div>
 
-    function showManagePlacesModal() {
-      alert("ניהול מקומות יתוסף כאן (ניתן לערוך/למחוק מקומות)");
-    }
+        <div class="instructions">
+            <h3>📌 تعليمات الاستخدام</h3>
+            <p>اضغط على أي خانة لاختيار مكان العمل. اضغط مرة أخرى لإزالة التوزيع. استخدم الأزرار لإدارة العمال والأماكن.</p>
+        </div>
+    </div>
 
-    window.onload = renderCalendar;
-  </script>
+    <!-- Modals -->
+    <div class="modal" id="placeSelectorModal">
+        <div class="modal-content">
+            <h3>اختر مكان العمل</h3>
+            <div class="place-choice" id="placeChoiceContainer"></div>
+            <button class="btn-secondary" onclick="closePlaceSelector()">إلغاء</button>
+        </div>
+    </div>
+
+    <div class="modal" id="addPlaceModal">
+        <div class="modal-content">
+            <h3>إضافة مكان جديد</h3>
+            <input id="newPlaceInput" placeholder="اسم المكان" type="text"/>
+            <div style="margin-top: 1rem; text-align: center;">
+                <button onclick="saveNewPlace()">حفظ</button>
+                <button class="btn-secondary" onclick="closeAddPlaceModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addWorkerModal">
+        <div class="modal-content">
+            <h3>إضافة عامل جديد</h3>
+            <input id="newWorkerInput" placeholder="اسم العامل" type="text"/>
+            <input id="newWorkerId" placeholder="رقم الهوية" type="text"/>
+            <input id="newWorkerPhone" placeholder="رقم الهاتف" type="text"/>
+            <div style="margin-top: 1rem; text-align: center;">
+                <button onclick="saveNewWorker()">حفظ</button>
+                <button class="btn-secondary" onclick="closeAddWorkerModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="editWorkerModal">
+        <div class="modal-content">
+            <h3>تعديل بيانات العامل</h3>
+            <input id="editWorkerName" placeholder="اسم العامل" type="text" />
+            <input id="editWorkerId" placeholder="رقم الهوية" type="text" />
+            <input id="editWorkerPhone" placeholder="رقم الهاتف" type="text" />
+            <div style="margin-top: 1rem; text-align: center;">
+                <button onclick="saveEditedWorker()">حفظ</button>
+                <button class="btn-secondary" onclick="closeEditWorkerModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="managePlacesModal">
+        <div class="modal-content">
+            <h3>إدارة الأماكن</h3>
+            <div id="placeListContainer" style="max-height: 300px; overflow-y: auto;"></div>
+            <button class="btn-secondary" onclick="closeManagePlacesModal()">إغلاق</button>
+        </div>
+    </div>
+
+    <div class="modal" id="manageWorkersModal">
+        <div class="modal-content">
+            <h3>إدارة العمال</h3>
+            <div id="workerListContainer" style="max-height: 300px; overflow-y: auto;"></div>
+            <button class="btn-secondary" onclick="closeManageWorkersModal()">إغلاق</button>
+        </div>
+    </div>
+
+    <div class="modal" id="workerDetailsModal">
+        <div class="modal-content">
+            <h3>تفاصيل العامل</h3>
+            <p id="workerDetailsText"></p>
+            <button class="btn-secondary" onclick="closeWorkerDetailsModal()">إغلاق</button>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+        const workers = [];
+        const places = [];
+
+        // Calendar generation
+        function generateCalendar() {
+            const calendar = document.getElementById("calendar");
+            calendar.innerHTML = '';
+            calendar.style.gridTemplateColumns = `repeat(${days.length + 1}, 1fr)`;
+
+            // Add empty header cell
+            calendar.appendChild(createCell('', 'header-cell'));
+            
+            // Add day headers
+            days.forEach(day => calendar.appendChild(createCell(day, 'header-cell')));
+
+            // Add worker rows
+            workers.forEach(worker => {
+                const name = typeof worker === 'string' ? worker : worker.name;
+                const nameCell = createCell(name, 'name-cell');
+                nameCell.onclick = () => showWorkerDetails(worker);
+                calendar.appendChild(nameCell);
+                
+                // Add time cells for each day
+                days.forEach(() => {
+                    const cell = createCell('', 'time-cell');
+                    cell.onclick = () => {
+                        if (cell.textContent.trim()) {
+                            clearAssignment(cell);
+                        } else {
+                            openPlaceSelector(cell);
+                        }
+                    };
+                    calendar.appendChild(cell);
+                });
+            });
+        }
+
+        function createCell(text, className) {
+            const div = document.createElement('div');
+            div.className = className;
+            div.textContent = text;
+            return div;
+        }
+
+        // Place selector functions
+        function openPlaceSelector(cell) {
+            const container = document.getElementById("placeChoiceContainer");
+            container.innerHTML = '';
+            
+            places.forEach((place, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'place-btn';
+                btn.textContent = place;
+                btn.onclick = () => {
+                    cell.textContent = place;
+                    cell.className = 'time-cell assigned place-color-' + (index % 7);
+                    closePlaceSelector();
+                    autoSaveSchedule();
+                    updateAssignmentSummary();
+                };
+                container.appendChild(btn);
+            });
+            
+            document.getElementById("placeSelectorModal").style.display = 'flex';
+        }
+
+        function closePlaceSelector() {
+            document.getElementById("placeSelectorModal").style.display = 'none';
+        }
+
+        function clearAssignment(cell) {
+            cell.textContent = '';
+            cell.classList.remove('assigned');
+            // Remove all place-color classes
+            for (let i = 0; i < 7; i++) {
+                cell.classList.remove('place-color-' + i);
+            }
+            updateAssignmentSummary();
+            autoSaveSchedule();
+        }
+
+        // Worker management functions
+        function showAddWorkerModal() {
+            document.getElementById("addWorkerModal").style.display = "flex";
+        }
+
+        function closeAddWorkerModal() {
+            document.getElementById("addWorkerModal").style.display = "none";
+            document.getElementById("newWorkerInput").value = '';
+            document.getElementById("newWorkerId").value = '';
+            document.getElementById("newWorkerPhone").value = '';
+        }
+
+        function saveNewWorker() {
+            const nameInput = document.getElementById("newWorkerInput");
+            const idInput = document.getElementById("newWorkerId");
+            const phoneInput = document.getElementById("newWorkerPhone");
+            
+            const name = nameInput.value.trim();
+            const id = idInput.value.trim();
+            const phone = phoneInput.value.trim();
+            
+            if (name && id && phone) {
+                workers.push({ name, id, phone });
+                closeAddWorkerModal();
+                generateCalendar();
+                autoSaveSchedule();
+            } else {
+                alert("يرجى ملء جميع الحقول.");
+            }
+        }
+
+        function showManageWorkersModal() {
+            const container = document.getElementById("workerListContainer");
+            container.innerHTML = '';
+            
+            workers.forEach((worker, index) => {
+                const row = document.createElement('div');
+                row.className = 'worker-row';
+                
+                const details = document.createElement('span');
+                details.innerHTML = `<strong>${worker.name}</strong><br>هوية: ${worker.id}<br>📞 ${worker.phone}`;
+                
+                const buttons = document.createElement('div');
+                buttons.innerHTML = `
+                    <button onclick="editWorker(${index})" style="margin: 2px; padding: 4px 8px;">✏️</button>
+                    <button class="btn-secondary" onclick="removeWorker(${index})" style="margin: 2px; padding: 4px 8px;">🗑️</button>
+                `;
+
+                row.appendChild(details);
+                row.appendChild(buttons);
+                container.appendChild(row);
+            });
+
+            document.getElementById("manageWorkersModal").style.display = 'flex';
+        }
+
+        function closeManageWorkersModal() {
+            document.getElementById("manageWorkersModal").style.display = "none";
+        }
+
+        function removeWorker(index) {
+            if (confirm("هل أنت متأكد من حذف هذا العامل؟")) {
+                workers.splice(index, 1);
+                autoSaveSchedule();
+                showManageWorkersModal();
+                generateCalendar();
+            }
+        }
+
+        let editingWorkerIndex = null;
+
+        function editWorker(index) {
+            const worker = workers[index];
+            document.getElementById("editWorkerName").value = worker.name;
+            document.getElementById("editWorkerId").value = worker.id;
+            document.getElementById("editWorkerPhone").value = worker.phone;
+            editingWorkerIndex = index;
+            closeManageWorkersModal();
+            document.getElementById("editWorkerModal").style.display = "flex";
+        }
+
+        function saveEditedWorker() {
+            const name = document.getElementById("editWorkerName").value.trim();
+            const id = document.getElementById("editWorkerId").value.trim();
+            const phone = document.getElementById("editWorkerPhone").value.trim();
+
+            if (name && id && phone) {
+                workers[editingWorkerIndex] = { name, id, phone };
+                autoSaveSchedule();
+                generateCalendar();
+                closeEditWorkerModal();
+            } else {
+                alert("يرجى ملء جميع الحقول.");
+            }
+        }
+
+        function closeEditWorkerModal() {
+            document.getElementById("editWorkerModal").style.display = "none";
+            editingWorkerIndex = null;
+        }
+
+        function showWorkerDetails(worker) {
+            const text = typeof worker === 'string'
+                ? `<strong>الاسم:</strong> ${worker}<br><em>لا توجد معلومات إضافية</em>`
+                : `<strong>الاسم:</strong> ${worker.name}<br><strong>الهوية:</strong> ${worker.id}<br><strong>الهاتف:</strong> ${worker.phone}`;
+            document.getElementById("workerDetailsText").innerHTML = text;
+            document.getElementById("workerDetailsModal").style.display = "flex";
+        }
+
+        function closeWorkerDetailsModal() {
+            document.getElementById("workerDetailsModal").style.display = "none";
+        }
+
+        // Place management functions
+        function showAddPlaceModal() {
+            document.getElementById("addPlaceModal").style.display = "flex";
+        }
+
+        function closeAddPlaceModal() {
+            document.getElementById("addPlaceModal").style.display = "none";
+            document.getElementById("newPlaceInput").value = '';
+        }
+
+        function saveNewPlace() {
+            const input = document.getElementById("newPlaceInput");
+            const name = input.value.trim();
+            if (name) {
+                places.push(name);
+                closeAddPlaceModal();
+                autoSaveSchedule();
+            } else {
+                alert("يرجى إدخال اسم المكان.");
+            }
+        }
+
+        function showManagePlacesModal() {
+            const container = document.getElementById("placeListContainer");
+            container.innerHTML = '';
+            
+            places.forEach((place, index) => {
+                const row = document.createElement('div');
+                row.className = 'place-row';
+                row.innerHTML = `
+                    <span>${place}</span>
+                    <div>
+                        <button onclick="renamePlace(${index})" style="margin: 2px; padding: 4px 8px;">✏️</button>
+                        <button class="btn-secondary" onclick="removePlace(${index})" style="margin: 2px; padding: 4px 8px;">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+            
+            document.getElementById("managePlacesModal").style.display = 'flex';
+        }
+
+        function closeManagePlacesModal() {
+            document.getElementById("managePlacesModal").style.display = "none";
+        }
+
+        function renamePlace(index) {
+            const newName = prompt("أدخل الاسم الجديد للمكان:", places[index]);
+            if (newName) {
+                const oldName = places[index];
+                places[index] = newName.trim();
+                
+                // Update all assignments with the old name
+                document.querySelectorAll('.time-cell').forEach(cell => {
+                    if (cell.textContent.trim() === oldName) {
+                        cell.textContent = newName.trim();
+                    }
+                });
+                
+                showManagePlacesModal();
+                autoSaveSchedule();
+                updateAssignmentSummary();
+            }
+        }
+
+        function removePlace(index) {
+            if (confirm("هل أنت متأكد من حذف هذا المكان؟")) {
+                const placeName = places[index];
+                places.splice(index, 1);
+                
+                // Clear all assignments for this place
+                document.querySelectorAll('.time-cell').forEach(cell => {
+                    if (cell.textContent.trim() === placeName) {
+                        clearAssignment(cell);
+                    }
+                });
+                
+                showManagePlacesModal();
+                autoSaveSchedule();
+                updateAssignmentSummary();
+            }
+        }
+
+        // Summary and save functions
+        function updateAssignmentSummary() {
+            const counters = {};
+            let total = 0;
+            places.forEach(place => counters[place] = 0);
+
+            document.querySelectorAll('.time-cell').forEach(cell => {
+                const place = cell.textContent.trim();
+                if (place && counters.hasOwnProperty(place)) {
+                    counters[place]++;
+                    total++;
+                }
+            });
+
+            let summary = `إجمالي التوزيعات: ${total}<br>`;
+            for (const [place, count] of Object.entries(counters)) {
+                summary += `${place}: ${count} عامل<br>`;
+            }
+
+            document.getElementById('assignmentSummary').innerHTML = summary;
+        }
+
+        function autoSaveSchedule() {
+            const data = {
+                workers,
+                places,
+                assignments: []
+            };
+            
+            const cells = document.querySelectorAll('.time-cell');
+            cells.forEach((cell, index) => {
+                if (cell.textContent.trim()) {
+                    let colorClass = '';
+                    for (let i = 0; i < 7; i++) {
+                        if (cell.classList.contains('place-color-' + i)) {
+                            colorClass = 'place-color-' + i;
+                            break;
+                        }
+                    }
+                    data.assignments.push({ 
+                        index, 
+                        value: cell.textContent.trim(),
+                        colorClass: colorClass 
+                    });
+                }
+            });
+            
+            const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileName.endsWith(".json") ? fileName : fileName + ".json";
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearAssignments() {
+            document.querySelectorAll('.time-cell').forEach(cell => {
+                clearAssignment(cell);
+            });
+            updateAssignmentSummary();
+        }
+
+        function resetLocalStorage() {
+            if (confirm("هل أنت متأكد من حذف جميع البيانات؟")) {
+                localStorage.removeItem("scheduleData");
+                location.reload();
+            }
+        }
+
+        // Print function
+        function printSchedule() {
+            const summary = document.getElementById('assignmentSummary');
+            const originalDisplay = summary.style.display;
+            summary.style.display = 'none';
+            
+            window.print();
+            
+            summary.style.display = originalDisplay;
+        }
+
+        // Export to Excel function
+        function exportToExcel() {
+            try {
+                const wb = XLSX.utils.book_new();
+                
+                // Prepare data for the main schedule sheet
+                const scheduleData = [];
+                const headerRow = ['العامل'];
+                days.forEach(day => headerRow.push(day));
+                scheduleData.push(headerRow);
+                
+                // Add worker rows
+                const cells = document.querySelectorAll('.time-cell');
+                let cellIndex = 0;
+                
+                workers.forEach(worker => {
+                    const row = [typeof worker === 'string' ? worker : worker.name];
+                    
+                    days.forEach(() => {
+                        const cellValue = cells[cellIndex] ? cells[cellIndex].textContent.trim() : '';
+                        row.push(cellValue);
+                        cellIndex++;
+                    });
+                    
+                    scheduleData.push(row);
+                });
+                
+                // Create worksheet for schedule
+                const ws1 = XLSX.utils.aoa_to_sheet(scheduleData);
+                const colWidths = [{ wch: 20 }];
+                days.forEach(() => colWidths.push({ wch: 15 }));
+                ws1['!cols'] = colWidths;
+                XLSX.utils.book_append_sheet(wb, ws1, 'جدول المناوبات');
+                
+                // Create summary sheet
+                const summaryData = [['المكان', 'عدد العمال']];
+                const counters = {};
+                places.forEach(place => counters[place] = 0);
+                
+                document.querySelectorAll('.time-cell').forEach(cell => {
+                    const place = cell.textContent.trim();
+                    if (place && counters.hasOwnProperty(place)) {
+                        counters[place]++;
+                    }
+                });
+                
+                let total = 0;
+                for (const [place, count] of Object.entries(counters)) {
+                    summaryData.push([place, count]);
+                    total += count;
+                }
+                summaryData.push(['المجموع', total]);
+                
+                const ws2 = XLSX.utils.aoa_to_sheet(summaryData);
+                ws2['!cols'] = [{ wch: 20 }, { wch: 15 }];
+                XLSX.utils.book_append_sheet(wb, ws2, 'الملخص');
+                
+                // Create workers details sheet
+                const workersData = [['الاسم', 'رقم الهوية', 'رقم الهاتف']];
+                workers.forEach(worker => {
+                    if (typeof worker === 'string') {
+                        workersData.push([worker, '', '']);
+                    } else {
+                        workersData.push([worker.name, worker.id, worker.phone]);
+                    }
+                });
+                
+                const ws3 = XLSX.utils.aoa_to_sheet(workersData);
+                ws3['!cols'] = [{ wch: 20 }, { wch: 15 }, { wch: 15 }];
+                XLSX.utils.book_append_sheet(wb, ws3, 'بيانات العمال');
+                
+                // Generate filename with current date
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('ar-EG').replace(/\//g, '-');
+                const filename = `جدول_المناوبات_${dateStr}.xlsx`;
+                
+                // Save file
+                XLSX.writeFile(wb, filename);
+                alert('✅ تم تصدير الملف بنجاح!');
+                
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('❌ حدث خطأ أثناء تصدير الملف');
+            }
+        }
+
+        // Initialize on page load
+        window.onload = () => {
+            const saved = localStorage.getItem("scheduleData");
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    workers.push(...(data.workers || []));
+                    places.push(...(data.places || []));
+                    generateCalendar();
+                    
+                    const cells = document.querySelectorAll('.time-cell');
+                    if (data.assignments) {
+                        data.assignments.forEach(a => {
+                            if (cells[a.index]) {
+                                cells[a.index].textContent = a.value;
+                                cells[a.index].classList.add('assigned');
+                                if (a.colorClass) {
+                                    cells[a.index].classList.add(a.colorClass);
+                                }
+                            }
+                        });
+                    }
+                    
+                    updateAssignmentSummary();
+                } catch (error) {
+                    console.error('Error loading saved data:', error);
+                    generateCalendar();
+                }
+            } else {
+                generateCalendar();
+            }
+        };
+    </script>
 </body>
-</html>
+</html>trim()) {
+                    let colorClass = '';
+                    for (let i = 0; i < 7; i++) {
+                        if (cell.classList.contains('place-color-' + i)) {
+                            colorClass = 'place-color-' + i;
+                            break;
+                        }
+                    }
+                    data.assignments.push({ 
+                        index, 
+                        value: cell.textContent.trim(),
+                        colorClass: colorClass 
+                    });
+                }
+            });
+            
+            localStorage.setItem("scheduleData", JSON.stringify(data));
+            if (typeof saveScheduleToFirebase === 'function') {
+                saveScheduleToFirebase(data);
+            }
+            updateAssignmentSummary();
+        }
+
+        function loadSchedule(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    workers.length = 0;
+                    places.length = 0;
+                    workers.push(...data.workers);
+                    places.push(...data.places);
+                    generateCalendar();
+                    
+                    const cells = document.querySelectorAll('.time-cell');
+                    data.assignments.forEach(a => {
+                        if (cells[a.index]) {
+                            cells[a.index].textContent = a.value;
+                            cells[a.index].classList.add('assigned');
+                            if (a.colorClass) {
+                                cells[a.index].classList.add(a.colorClass);
+                            }
+                        }
+                    });
+                    
+                    updateAssignmentSummary();
+                    autoSaveSchedule();
+                    alert("تم تحميل الملف بنجاح!");
+                } catch (error) {
+                    alert("خطأ في قراءة الملف!");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function saveSchedule() {
+            const fileName = prompt("أدخل اسم الملف للحفظ:", "جدول_المناوبات.json");
+            if (!fileName) return;
+
+            const data = {
+                workers,
+                places,
+                assignments: []
+            };
+            
+            const cells = document.querySelectorAll('.time-cell');
+            cells.forEach((cell, index) => {
+                if (cell.textContent.
