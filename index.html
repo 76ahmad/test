@@ -251,6 +251,11 @@
             font-weight: bold;
         }
         
+        .optional-label {
+            font-size: 0.85em;
+            color: #888;
+        }
+        
         /* Print styles */
         @media print {
             body {
@@ -296,73 +301,27 @@
 
     <!-- SheetJS library for Excel export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-    <!-- Firebase Auth Script -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            authDomain: "farkad-scheduler.firebaseapp.com",
-            projectId: "farkad-scheduler",
-            storageBucket: "farkad-scheduler.firebasestorage.app",
-            messagingSenderId: "71149615141",
-            appId: "1:71149615141:web:97eac63fe0c39d4831a7cc",
-            measurementId: "G-41H0PK4LMR"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth();
-        const db = getFirestore();
-
-        // Auth check on page load
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                alert("يجب تسجيل الدخول أولاً");
-                window.location.href = "login.html";
-                return;
-            }
-
-            const userDoc = await getDoc(doc(db, "users", user.uid));
-            if (!userDoc.exists() || !userDoc.data().paid) {
-                alert("حسابك غير مفعل. تواصل مع الدعم الفني.");
-                window.location.href = "login.html";
-            } else {
-                console.log("المستخدم مسجل الدخول ومعتمد");
-            }
-        });
-
-        // Save schedule to Firestore
-        window.saveScheduleToFirebase = async function(data) {
-            const user = auth.currentUser;
-            if (!user) return;
-            const userDoc = doc(db, "schedules", user.uid);
-            await setDoc(userDoc, data);
-            alert("تم حفظ الجدول في السحابة بنجاح");
-        };
-    </script>
 </head>
 
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏢 نظام إدارة المناوبات</h1>
-            <p>إدارة مناوبات العمال وأماكن العمل</p>
+            <h1>🏢 מערכת ניהול משמרות</h1>
+            <p>ניהול משמרות עובדים ומקומות עבודה</p>
         </div>
         
         <div class="controls">
-            <button onclick="saveSchedule()">💾 حفظ الملف</button>
+            <button onclick="saveSchedule()">💾 שמור קובץ</button>
             <input accept=".json" id="fileInput" onchange="loadSchedule(event)" style="display:none" type="file"/>
-            <button onclick="document.getElementById('fileInput').click()">📂 تحميل</button>
-            <button onclick="showAddPlaceModal()">➕ إضافة مكان</button>
-            <button onclick="showAddWorkerModal()">👤 إضافة عامل</button>
-            <button onclick="showManagePlacesModal()">⚙️ إدارة الأماكن</button>
-            <button onclick="showManageWorkersModal()">👥 إدارة العمال</button>
-            <button class="btn-success" onclick="printSchedule()">🖨️ طباعة</button>
-            <button class="btn-info" onclick="exportToExcel()">📊 تصدير Excel</button>
-            <button class="btn-secondary" onclick="clearAssignments()">🗑️ مسح التوزيعات</button>
-            <button class="btn-secondary" onclick="resetLocalStorage()">🔄 إعادة تعيين</button>
+            <button onclick="document.getElementById('fileInput').click()">📂 טעינה</button>
+            <button onclick="showAddPlaceModal()">➕ הוסף מקום</button>
+            <button onclick="showAddWorkerModal()">👤 הוסף עובד</button>
+            <button onclick="showManagePlacesModal()">⚙️ נהל מקומות</button>
+            <button onclick="showManageWorkersModal()">👥 נהל עובדים</button>
+            <button class="btn-success" onclick="printSchedule()">🖨️ הדפסה</button>
+            <button class="btn-info" onclick="exportToExcel()">📊 יצוא ל-Excel</button>
+            <button class="btn-secondary" onclick="clearAssignments()">🗑️ נקה הקצאות</button>
+            <button class="btn-secondary" onclick="resetLocalStorage()">🔄 איפוס מערכת</button>
         </div>
 
         <div class="calendar-container">
@@ -372,84 +331,88 @@
         <div id="assignmentSummary"></div>
 
         <div class="instructions">
-            <h3>📌 تعليمات الاستخدام</h3>
-            <p>اضغط على أي خانة لاختيار مكان العمل. اضغط مرة أخرى لإزالة التوزيع. استخدم الأزرار لإدارة العمال والأماكن.</p>
+            <h3>📌 הוראות שימוש</h3>
+            <p>לחץ על כל תא לבחירת מקום העבודה. לחץ שוב כדי להסיר הקצאה. השתמש בכפתורים לניהול עובדים ומקומות.</p>
         </div>
     </div>
 
     <!-- Modals -->
     <div class="modal" id="placeSelectorModal">
         <div class="modal-content">
-            <h3>اختر مكان العمل</h3>
+            <h3>בחר מקום עבודה</h3>
             <div class="place-choice" id="placeChoiceContainer"></div>
-            <button class="btn-secondary" onclick="closePlaceSelector()">إلغاء</button>
+            <button class="btn-secondary" onclick="closePlaceSelector()">ביטול</button>
         </div>
     </div>
 
     <div class="modal" id="addPlaceModal">
         <div class="modal-content">
-            <h3>إضافة مكان جديد</h3>
-            <input id="newPlaceInput" placeholder="اسم المكان" type="text"/>
+            <h3>הוסף מקום חדש</h3>
+            <input id="newPlaceInput" placeholder="שם המקום" type="text"/>
             <div style="margin-top: 1rem; text-align: center;">
-                <button onclick="saveNewPlace()">حفظ</button>
-                <button class="btn-secondary" onclick="closeAddPlaceModal()">إلغاء</button>
+                <button onclick="saveNewPlace()">שמור</button>
+                <button class="btn-secondary" onclick="closeAddPlaceModal()">ביטול</button>
             </div>
         </div>
     </div>
 
     <div class="modal" id="addWorkerModal">
         <div class="modal-content">
-            <h3>إضافة عامل جديد</h3>
-            <input id="newWorkerInput" placeholder="اسم العامل" type="text"/>
-            <input id="newWorkerId" placeholder="رقم الهوية" type="text"/>
-            <input id="newWorkerPhone" placeholder="رقم الهاتف" type="text"/>
+            <h3>הוסף עובד חדש</h3>
+            <input id="newWorkerInput" placeholder="שם העובד" type="text"/>
+            <input id="newWorkerId" placeholder="מספר זהות (אופציונלי)" type="text"/>
+            <label class="optional-label">שדה אופציונלי</label>
+            <input id="newWorkerPhone" placeholder="מספר טלפון (אופציונלי)" type="text"/>
+            <label class="optional-label">שדה אופציונלי</label>
             <div style="margin-top: 1rem; text-align: center;">
-                <button onclick="saveNewWorker()">حفظ</button>
-                <button class="btn-secondary" onclick="closeAddWorkerModal()">إلغاء</button>
+                <button onclick="saveNewWorker()">שמור</button>
+                <button class="btn-secondary" onclick="closeAddWorkerModal()">ביטול</button>
             </div>
         </div>
     </div>
 
     <div class="modal" id="editWorkerModal">
         <div class="modal-content">
-            <h3>تعديل بيانات العامل</h3>
-            <input id="editWorkerName" placeholder="اسم العامل" type="text" />
-            <input id="editWorkerId" placeholder="رقم الهوية" type="text" />
-            <input id="editWorkerPhone" placeholder="رقم الهاتف" type="text" />
+            <h3>עריכת פרטי עובד</h3>
+            <input id="editWorkerName" placeholder="שם העובד" type="text" />
+            <input id="editWorkerId" placeholder="מספר זהות (אופציונלי)" type="text" />
+            <label class="optional-label">שדה אופציונלי</label>
+            <input id="editWorkerPhone" placeholder="מספר טלפון (אופציונלי)" type="text" />
+            <label class="optional-label">שדה אופציונלי</label>
             <div style="margin-top: 1rem; text-align: center;">
-                <button onclick="saveEditedWorker()">حفظ</button>
-                <button class="btn-secondary" onclick="closeEditWorkerModal()">إلغاء</button>
+                <button onclick="saveEditedWorker()">שמור</button>
+                <button class="btn-secondary" onclick="closeEditWorkerModal()">ביטול</button>
             </div>
         </div>
     </div>
 
     <div class="modal" id="managePlacesModal">
         <div class="modal-content">
-            <h3>إدارة الأماكن</h3>
+            <h3>ניהול מקומות</h3>
             <div id="placeListContainer" style="max-height: 300px; overflow-y: auto;"></div>
-            <button class="btn-secondary" onclick="closeManagePlacesModal()">إغلاق</button>
+            <button class="btn-secondary" onclick="closeManagePlacesModal()">סגור</button>
         </div>
     </div>
 
     <div class="modal" id="manageWorkersModal">
         <div class="modal-content">
-            <h3>إدارة العمال</h3>
+            <h3>ניהול עובדים</h3>
             <div id="workerListContainer" style="max-height: 300px; overflow-y: auto;"></div>
-            <button class="btn-secondary" onclick="closeManageWorkersModal()">إغلاق</button>
+            <button class="btn-secondary" onclick="closeManageWorkersModal()">סגור</button>
         </div>
     </div>
 
     <div class="modal" id="workerDetailsModal">
         <div class="modal-content">
-            <h3>تفاصيل العامل</h3>
+            <h3>פרטי עובד</h3>
             <p id="workerDetailsText"></p>
-            <button class="btn-secondary" onclick="closeWorkerDetailsModal()">إغلاق</button>
+            <button class="btn-secondary" onclick="closeWorkerDetailsModal()">סגור</button>
         </div>
     </div>
 
     <script>
         // Global variables
-        const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+        const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
         const workers = [];
         const places = [];
 
@@ -552,13 +515,17 @@
             const id = idInput.value.trim();
             const phone = phoneInput.value.trim();
             
-            if (name && id && phone) {
-                workers.push({ name, id, phone });
+            if (name) {
+                workers.push({ 
+                    name, 
+                    id: id || '', 
+                    phone: phone || '' 
+                });
                 closeAddWorkerModal();
                 generateCalendar();
                 autoSaveSchedule();
             } else {
-                alert("يرجى ملء جميع الحقول.");
+                alert("נא למלא את שם העובד.");
             }
         }
 
@@ -571,7 +538,10 @@
                 row.className = 'worker-row';
                 
                 const details = document.createElement('span');
-                details.innerHTML = `<strong>${worker.name}</strong><br>هوية: ${worker.id}<br>📞 ${worker.phone}`;
+                let workerInfo = `<strong>${worker.name}</strong>`;
+                if (worker.id) workerInfo += `<br>זהות: ${worker.id}`;
+                if (worker.phone) workerInfo += `<br>📞 ${worker.phone}`;
+                details.innerHTML = workerInfo;
                 
                 const buttons = document.createElement('div');
                 buttons.innerHTML = `
@@ -592,7 +562,7 @@
         }
 
         function removeWorker(index) {
-            if (confirm("هل أنت متأكد من حذف هذا العامل؟")) {
+            if (confirm("האם אתה בטוח שתרצה למחוק את העובד הזה?")) {
                 workers.splice(index, 1);
                 autoSaveSchedule();
                 showManageWorkersModal();
@@ -605,8 +575,8 @@
         function editWorker(index) {
             const worker = workers[index];
             document.getElementById("editWorkerName").value = worker.name;
-            document.getElementById("editWorkerId").value = worker.id;
-            document.getElementById("editWorkerPhone").value = worker.phone;
+            document.getElementById("editWorkerId").value = worker.id || '';
+            document.getElementById("editWorkerPhone").value = worker.phone || '';
             editingWorkerIndex = index;
             closeManageWorkersModal();
             document.getElementById("editWorkerModal").style.display = "flex";
@@ -617,13 +587,17 @@
             const id = document.getElementById("editWorkerId").value.trim();
             const phone = document.getElementById("editWorkerPhone").value.trim();
 
-            if (name && id && phone) {
-                workers[editingWorkerIndex] = { name, id, phone };
+            if (name) {
+                workers[editingWorkerIndex] = { 
+                    name, 
+                    id: id || '', 
+                    phone: phone || '' 
+                };
                 autoSaveSchedule();
                 generateCalendar();
                 closeEditWorkerModal();
             } else {
-                alert("يرجى ملء جميع الحقول.");
+                alert("נא למלא את שם העובד.");
             }
         }
 
@@ -633,9 +607,15 @@
         }
 
         function showWorkerDetails(worker) {
-            const text = typeof worker === 'string'
-                ? `<strong>الاسم:</strong> ${worker}<br><em>لا توجد معلومات إضافية</em>`
-                : `<strong>الاسم:</strong> ${worker.name}<br><strong>الهوية:</strong> ${worker.id}<br><strong>الهاتف:</strong> ${worker.phone}`;
+            let text;
+            if (typeof worker === 'string') {
+                text = `<strong>שם:</strong> ${worker}<br><em>אין מידע נוסף</em>`;
+            } else {
+                text = `<strong>שם:</strong> ${worker.name}`;
+                if (worker.id) text += `<br><strong>זהות:</strong> ${worker.id}`;
+                if (worker.phone) text += `<br><strong>טלפון:</strong> ${worker.phone}`;
+                if (!worker.id && !worker.phone) text += `<br><em>אין מידע נוסף</em>`;
+            }
             document.getElementById("workerDetailsText").innerHTML = text;
             document.getElementById("workerDetailsModal").style.display = "flex";
         }
@@ -662,7 +642,7 @@
                 closeAddPlaceModal();
                 autoSaveSchedule();
             } else {
-                alert("يرجى إدخال اسم المكان.");
+                alert("נא להזין שם מקום.");
             }
         }
 
@@ -691,7 +671,7 @@
         }
 
         function renamePlace(index) {
-            const newName = prompt("أدخل الاسم الجديد للمكان:", places[index]);
+            const newName = prompt("הזן שם חדש למקום:", places[index]);
             if (newName) {
                 const oldName = places[index];
                 places[index] = newName.trim();
@@ -710,7 +690,7 @@
         }
 
         function removePlace(index) {
-            if (confirm("هل أنت متأكد من حذف هذا المكان؟")) {
+            if (confirm("האם אתה בטוח שתרצה למחוק את המקום הזה?")) {
                 const placeName = places[index];
                 places.splice(index, 1);
                 
@@ -741,15 +721,82 @@
                 }
             });
 
-            let summary = `إجمالي التوزيعات: ${total}<br>`;
+            let summary = `סה"כ הקצאות: ${total}<br>`;
             for (const [place, count] of Object.entries(counters)) {
-                summary += `${place}: ${count} عامل<br>`;
+                summary += `${place}: ${count} עובדים<br>`;
             }
 
             document.getElementById('assignmentSummary').innerHTML = summary;
         }
 
         function autoSaveSchedule() {
+            const data = {
+                workers,
+                places,
+                assignments: []
+            };
+            
+            const cells = document.querySelectorAll('.time-cell');
+            cells.forEach((cell, index) => {
+                if (cell.textContent.trim()) {
+                    let colorClass = '';
+                    for (let i = 0; i < 7; i++) {
+                        if (cell.classList.contains('place-color-' + i)) {
+                            colorClass = 'place-color-' + i;
+                            break;
+                        }
+                    }
+                    data.assignments.push({ 
+                        index, 
+                        value: cell.textContent.trim(),
+                        colorClass: colorClass 
+                    });
+                }
+            });
+            
+            localStorage.setItem("scheduleData", JSON.stringify(data));
+            updateAssignmentSummary();
+        }
+
+        function loadSchedule(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    workers.length = 0;
+                    places.length = 0;
+                    workers.push(...data.workers);
+                    places.push(...data.places);
+                    generateCalendar();
+                    
+                    const cells = document.querySelectorAll('.time-cell');
+                    data.assignments.forEach(a => {
+                        if (cells[a.index]) {
+                            cells[a.index].textContent = a.value;
+                            cells[a.index].classList.add('assigned');
+                            if (a.colorClass) {
+                                cells[a.index].classList.add(a.colorClass);
+                            }
+                        }
+                    });
+                    
+                    updateAssignmentSummary();
+                    autoSaveSchedule();
+                    alert("הקובץ נטען בהצלחה!");
+                } catch (error) {
+                    alert("שגיאה בקריאת הקובץ!");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function saveSchedule() {
+            const fileName = prompt("הזן שם קובץ לשמירה:", "לוח_משמרות.json");
+            if (!fileName) return;
+
             const data = {
                 workers,
                 places,
@@ -791,7 +838,7 @@
         }
 
         function resetLocalStorage() {
-            if (confirm("هل أنت متأكد من حذف جميع البيانات؟")) {
+            if (confirm("האם אתה בטוח שתרצה למחוק את כל הנתונים?")) {
                 localStorage.removeItem("scheduleData");
                 location.reload();
             }
@@ -815,7 +862,7 @@
                 
                 // Prepare data for the main schedule sheet
                 const scheduleData = [];
-                const headerRow = ['العامل'];
+                const headerRow = ['עובד'];
                 days.forEach(day => headerRow.push(day));
                 scheduleData.push(headerRow);
                 
@@ -840,10 +887,10 @@
                 const colWidths = [{ wch: 20 }];
                 days.forEach(() => colWidths.push({ wch: 15 }));
                 ws1['!cols'] = colWidths;
-                XLSX.utils.book_append_sheet(wb, ws1, 'جدول المناوبات');
+                XLSX.utils.book_append_sheet(wb, ws1, 'לוח משמרות');
                 
                 // Create summary sheet
-                const summaryData = [['المكان', 'عدد العمال']];
+                const summaryData = [['מקום', 'מספר עובדים']];
                 const counters = {};
                 places.forEach(place => counters[place] = 0);
                 
@@ -859,38 +906,38 @@
                     summaryData.push([place, count]);
                     total += count;
                 }
-                summaryData.push(['المجموع', total]);
+                summaryData.push(['סה"כ', total]);
                 
                 const ws2 = XLSX.utils.aoa_to_sheet(summaryData);
                 ws2['!cols'] = [{ wch: 20 }, { wch: 15 }];
-                XLSX.utils.book_append_sheet(wb, ws2, 'الملخص');
+                XLSX.utils.book_append_sheet(wb, ws2, 'סיכום');
                 
                 // Create workers details sheet
-                const workersData = [['الاسم', 'رقم الهوية', 'رقم الهاتف']];
+                const workersData = [['שם', 'מספר זהות', 'מספר טלפון']];
                 workers.forEach(worker => {
                     if (typeof worker === 'string') {
                         workersData.push([worker, '', '']);
                     } else {
-                        workersData.push([worker.name, worker.id, worker.phone]);
+                        workersData.push([worker.name, worker.id || '', worker.phone || '']);
                     }
                 });
                 
                 const ws3 = XLSX.utils.aoa_to_sheet(workersData);
                 ws3['!cols'] = [{ wch: 20 }, { wch: 15 }, { wch: 15 }];
-                XLSX.utils.book_append_sheet(wb, ws3, 'بيانات العمال');
+                XLSX.utils.book_append_sheet(wb, ws3, 'פרטי עובדים');
                 
                 // Generate filename with current date
                 const now = new Date();
-                const dateStr = now.toLocaleDateString('ar-EG').replace(/\//g, '-');
-                const filename = `جدول_المناوبات_${dateStr}.xlsx`;
+                const dateStr = now.toLocaleDateString('he-IL').replace(/\//g, '-');
+                const filename = `לוח_משמרות_${dateStr}.xlsx`;
                 
                 // Save file
                 XLSX.writeFile(wb, filename);
-                alert('✅ تم تصدير الملف بنجاح!');
+                alert('✅ הקובץ יוצא בהצלחה!');
                 
             } catch (error) {
                 console.error('Export error:', error);
-                alert('❌ حدث خطأ أثناء تصدير الملف');
+                alert('❌ אירעה שגיאה בזמן יצוא הקובץ');
             }
         }
 
@@ -928,74 +975,4 @@
         };
     </script>
 </body>
-</html>trim()) {
-                    let colorClass = '';
-                    for (let i = 0; i < 7; i++) {
-                        if (cell.classList.contains('place-color-' + i)) {
-                            colorClass = 'place-color-' + i;
-                            break;
-                        }
-                    }
-                    data.assignments.push({ 
-                        index, 
-                        value: cell.textContent.trim(),
-                        colorClass: colorClass 
-                    });
-                }
-            });
-            
-            localStorage.setItem("scheduleData", JSON.stringify(data));
-            if (typeof saveScheduleToFirebase === 'function') {
-                saveScheduleToFirebase(data);
-            }
-            updateAssignmentSummary();
-        }
-
-        function loadSchedule(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    workers.length = 0;
-                    places.length = 0;
-                    workers.push(...data.workers);
-                    places.push(...data.places);
-                    generateCalendar();
-                    
-                    const cells = document.querySelectorAll('.time-cell');
-                    data.assignments.forEach(a => {
-                        if (cells[a.index]) {
-                            cells[a.index].textContent = a.value;
-                            cells[a.index].classList.add('assigned');
-                            if (a.colorClass) {
-                                cells[a.index].classList.add(a.colorClass);
-                            }
-                        }
-                    });
-                    
-                    updateAssignmentSummary();
-                    autoSaveSchedule();
-                    alert("تم تحميل الملف بنجاح!");
-                } catch (error) {
-                    alert("خطأ في قراءة الملف!");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function saveSchedule() {
-            const fileName = prompt("أدخل اسم الملف للحفظ:", "جدول_المناوبات.json");
-            if (!fileName) return;
-
-            const data = {
-                workers,
-                places,
-                assignments: []
-            };
-            
-            const cells = document.querySelectorAll('.time-cell');
-            cells.forEach((cell, index) => {
-                if (cell.textContent.
+</html>
