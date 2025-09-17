@@ -56,7 +56,7 @@
         
         .calendar-grid {
             display: grid;
-            min-width: 700px;
+            min-width: 800px;
             background: #e9ecef;
             border-radius: 12px;
             overflow: hidden;
@@ -183,6 +183,10 @@
             font-weight: bold;
         }
         
+        .header-cell.corner-cell {
+            font-size: 0.9em;
+        }
+        
         .name-cell {
             background: #212529 !important;
             color: #fff !important;
@@ -266,7 +270,7 @@
             body {
                 background: white !important;
                 padding: 0 !important;
-                font-size: 12pt !important;
+                font-size: 11pt !important;
                 color: black !important;
             }
             
@@ -300,61 +304,55 @@
                 border-radius: 0 !important;
                 min-width: auto !important;
                 width: 100% !important;
-                page-break-inside: auto;
                 display: table !important;
                 border-collapse: collapse !important;
-            }
-            
-            /* Create table rows for printing */
-            .calendar-grid {
-                display: table !important;
                 table-layout: fixed !important;
-                width: 100% !important;
             }
             
-            /* First row (headers) */
-            .calendar-grid .header-cell:first-child {
+            /* Create proper table rows */
+            .calendar-grid .grid-row {
+                display: table-row !important;
+            }
+            
+            .calendar-grid .header-cell,
+            .calendar-grid .name-cell,
+            .calendar-grid .time-cell {
                 display: table-cell !important;
+                border: 1pt solid black !important;
+                padding: 4pt !important;
+                vertical-align: middle !important;
+                text-align: center !important;
+                page-break-inside: avoid !important;
             }
             
             .calendar-grid .header-cell {
-                display: table-cell !important;
-                border: 1pt solid black !important;
-                padding: 6pt !important;
-                vertical-align: middle !important;
-                text-align: center !important;
                 background: #343a40 !important;
                 color: white !important;
                 font-weight: bold !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+                font-size: 10pt !important;
             }
             
-            /* Worker rows */
+            .calendar-grid .header-cell.corner-cell {
+                font-size: 9pt !important;
+            }
+            
             .calendar-grid .name-cell {
                 background: #212529 !important;
                 color: white !important;
                 font-weight: bold !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
-                display: table-cell !important;
-                border: 1pt solid black !important;
-                padding: 6pt !important;
-                vertical-align: middle !important;
-                text-align: center !important;
-                page-break-inside: avoid !important;
-                page-break-after: avoid !important;
+                font-size: 10pt !important;
+                width: 15% !important;
             }
             
             .calendar-grid .time-cell {
                 background: white !important;
                 color: black !important;
-                display: table-cell !important;
-                border: 1pt solid black !important;
-                padding: 6pt !important;
-                vertical-align: middle !important;
-                text-align: center !important;
-                page-break-inside: avoid !important;
+                font-size: 9pt !important;
+                width: calc(85% / 7) !important;
             }
             
             .calendar-grid .time-cell.assigned {
@@ -362,15 +360,16 @@
                 print-color-adjust: exact !important;
             }
             
-            /* Ensure table rows don't break */
-            .calendar-grid .name-cell,
-            .calendar-grid .time-cell {
-                page-break-inside: avoid !important;
-            }
-            
-            /* Force page breaks between logical sections if needed */
-            .page-break {
-                page-break-before: always !important;
+            /* Force color preservation for place colors */
+            .place-color-0,
+            .place-color-1,
+            .place-color-2,
+            .place-color-3,
+            .place-color-4,
+            .place-color-5,
+            .place-color-6 {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
         }
     </style>
@@ -487,29 +486,45 @@
     </div>
 
     <script>
-        // Global variables - REMOVED Saturday from days array
-        const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
-        let workers = [];
-        let places = [];
+        // Global variables
+        const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+        const workers = [];
+        const places = [];
 
-        // Calendar generation
+        // Calendar generation - UPDATED FUNCTION
         function generateCalendar() {
             const calendar = document.getElementById("calendar");
             calendar.innerHTML = '';
+            
+            // Set grid columns for screen display
             calendar.style.gridTemplateColumns = `repeat(${days.length + 1}, 1fr)`;
 
-            // Add header cell with "עובדים / ימים" text
-            const cornerCell = createCell('עובדים / ימים', 'header-cell');
+            // Create header row wrapper
+            const headerRow = document.createElement('div');
+            headerRow.className = 'grid-row';
+            
+            // Add corner cell with label "עובדים / ימים"
+            const cornerCell = createCell('עובדים / ימים', 'header-cell corner-cell');
+            headerRow.appendChild(cornerCell);
             calendar.appendChild(cornerCell);
             
             // Add day headers
-            days.forEach(day => calendar.appendChild(createCell(day, 'header-cell')));
+            days.forEach(day => {
+                const dayCell = createCell(day, 'header-cell');
+                headerRow.appendChild(dayCell);
+                calendar.appendChild(dayCell);
+            });
 
             // Add worker rows
             workers.forEach(worker => {
+                // Create row wrapper
+                const workerRow = document.createElement('div');
+                workerRow.className = 'grid-row';
+                
                 const name = typeof worker === 'string' ? worker : worker.name;
                 const nameCell = createCell(name, 'name-cell');
                 nameCell.onclick = () => showWorkerDetails(worker);
+                workerRow.appendChild(nameCell);
                 calendar.appendChild(nameCell);
                 
                 // Add time cells for each day
@@ -522,6 +537,7 @@
                             openPlaceSelector(cell);
                         }
                     };
+                    workerRow.appendChild(cell);
                     calendar.appendChild(cell);
                 });
             });
@@ -833,3 +849,223 @@
             
             localStorage.setItem("scheduleData", JSON.stringify(data));
             updateAssignmentSummary();
+        }
+
+        function loadSchedule(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    workers.length = 0;
+                    places.length = 0;
+                    workers.push(...data.workers);
+                    places.push(...data.places);
+                    generateCalendar();
+                    
+                    const cells = document.querySelectorAll('.time-cell');
+                    data.assignments.forEach(a => {
+                        if (cells[a.index]) {
+                            cells[a.index].textContent = a.value;
+                            cells[a.index].classList.add('assigned');
+                            if (a.colorClass) {
+                                cells[a.index].classList.add(a.colorClass);
+                            }
+                        }
+                    });
+                    
+                    updateAssignmentSummary();
+                    autoSaveSchedule();
+                    alert("הקובץ נטען בהצלחה!");
+                } catch (error) {
+                    alert("שגיאה בקריאת הקובץ!");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function saveSchedule() {
+            const fileName = prompt("הזן שם קובץ לשמירה:", "לוח_משמרות.json");
+            if (!fileName) return;
+
+            const data = {
+                workers,
+                places,
+                assignments: []
+            };
+            
+            const cells = document.querySelectorAll('.time-cell');
+            cells.forEach((cell, index) => {
+                if (cell.textContent.trim()) {
+                    let colorClass = '';
+                    for (let i = 0; i < 7; i++) {
+                        if (cell.classList.contains('place-color-' + i)) {
+                            colorClass = 'place-color-' + i;
+                            break;
+                        }
+                    }
+                    data.assignments.push({ 
+                        index, 
+                        value: cell.textContent.trim(),
+                        colorClass: colorClass 
+                    });
+                }
+            });
+            
+            const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileName.endsWith(".json") ? fileName : fileName + ".json";
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearAssignments() {
+            document.querySelectorAll('.time-cell').forEach(cell => {
+                clearAssignment(cell);
+            });
+            updateAssignmentSummary();
+        }
+
+        function resetLocalStorage() {
+            if (confirm("האם אתה בטוח שתרצה למחוק את כל הנתונים?")) {
+                localStorage.removeItem("scheduleData");
+                location.reload();
+            }
+        }
+
+        // Print function
+        function printSchedule() {
+            const summary = document.getElementById('assignmentSummary');
+            const originalDisplay = summary.style.display;
+            summary.style.display = 'none';
+            
+            window.print();
+            
+            summary.style.display = originalDisplay;
+        }
+
+        // Export to Excel function
+        function exportToExcel() {
+            try {
+                const wb = XLSX.utils.book_new();
+                
+                // Prepare data for the main schedule sheet
+                const scheduleData = [];
+                const headerRow = ['עובד'];
+                days.forEach(day => headerRow.push(day));
+                scheduleData.push(headerRow);
+                
+                // Add worker rows
+                const cells = document.querySelectorAll('.time-cell');
+                let cellIndex = 0;
+                
+                workers.forEach(worker => {
+                    const row = [typeof worker === 'string' ? worker : worker.name];
+                    
+                    days.forEach(() => {
+                        const cellValue = cells[cellIndex] ? cells[cellIndex].textContent.trim() : '';
+                        row.push(cellValue);
+                        cellIndex++;
+                    });
+                    
+                    scheduleData.push(row);
+                });
+                
+                // Create worksheet for schedule
+                const ws1 = XLSX.utils.aoa_to_sheet(scheduleData);
+                const colWidths = [{ wch: 20 }];
+                days.forEach(() => colWidths.push({ wch: 15 }));
+                ws1['!cols'] = colWidths;
+                XLSX.utils.book_append_sheet(wb, ws1, 'לוח משמרות');
+                
+                // Create summary sheet
+                const summaryData = [['מקום', 'מספר עובדים']];
+                const counters = {};
+                places.forEach(place => counters[place] = 0);
+                
+                document.querySelectorAll('.time-cell').forEach(cell => {
+                    const place = cell.textContent.trim();
+                    if (place && counters.hasOwnProperty(place)) {
+                        counters[place]++;
+                    }
+                });
+                
+                let total = 0;
+                for (const [place, count] of Object.entries(counters)) {
+                    summaryData.push([place, count]);
+                    total += count;
+                }
+                summaryData.push(['סה"כ', total]);
+                
+                const ws2 = XLSX.utils.aoa_to_sheet(summaryData);
+                ws2['!cols'] = [{ wch: 20 }, { wch: 15 }];
+                XLSX.utils.book_append_sheet(wb, ws2, 'סיכום');
+                
+                // Create workers details sheet
+                const workersData = [['שם', 'מספר זהות', 'מספר טלפון']];
+                workers.forEach(worker => {
+                    if (typeof worker === 'string') {
+                        workersData.push([worker, '', '']);
+                    } else {
+                        workersData.push([worker.name, worker.id || '', worker.phone || '']);
+                    }
+                });
+                
+                const ws3 = XLSX.utils.aoa_to_sheet(workersData);
+                ws3['!cols'] = [{ wch: 20 }, { wch: 15 }, { wch: 15 }];
+                XLSX.utils.book_append_sheet(wb, ws3, 'פרטי עובדים');
+                
+                // Generate filename with current date
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('he-IL').replace(/\//g, '-');
+                const filename = `לוח_משמרות_${dateStr}.xlsx`;
+                
+                // Save file
+                XLSX.writeFile(wb, filename);
+                alert('✅ הקובץ יוצא בהצלחה!');
+                
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('❌ אירעה שגיאה בזמן יצוא הקובץ');
+            }
+        }
+
+        // Initialize on page load
+        window.onload = () => {
+            const saved = localStorage.getItem("scheduleData");
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    workers.push(...(data.workers || []));
+                    places.push(...(data.places || []));
+                    generateCalendar();
+                    
+                    const cells = document.querySelectorAll('.time-cell');
+                    if (data.assignments) {
+                        data.assignments.forEach(a => {
+                            if (cells[a.index]) {
+                                cells[a.index].textContent = a.value;
+                                cells[a.index].classList.add('assigned');
+                                if (a.colorClass) {
+                                    cells[a.index].classList.add(a.colorClass);
+                                }
+                            }
+                        });
+                    }
+                    
+                    updateAssignmentSummary();
+                } catch (error) {
+                    console.error('Error loading saved data:', error);
+                    generateCalendar();
+                }
+            } else {
+                generateCalendar();
+            }
+        };
+    </script>
+</body>
+</html>
