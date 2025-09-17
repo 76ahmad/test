@@ -277,7 +277,7 @@
                 background: white !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                font-size: 10pt !important;
+                font-size: 12pt !important;
                 color: black !important;
             }
             
@@ -288,7 +288,7 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 width: 100% !important;
-                max-width: 100% !important;
+                max-width: none !important;
             }
             
             /* Hide non-printable elements */
@@ -307,95 +307,62 @@
                 width: 100% !important;
             }
             
-            /* Create table for printing */
-            .calendar-grid {
+            /* Create table wrapper for printing */
+            #printTable {
                 display: table !important;
-                background: white !important;
-                border-radius: 0 !important;
                 width: 100% !important;
-                margin: 0 auto !important;
-                padding: 0 !important;
                 border-collapse: collapse !important;
                 table-layout: fixed !important;
-                min-width: unset !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
             
-            /* Create rows structure */
-            .calendar-grid .header-cell:first-child {
+            #printTable tr {
+                display: table-row !important;
+                page-break-inside: avoid !important;
+            }
+            
+            #printTable th,
+            #printTable td {
                 display: table-cell !important;
-                width: 15% !important;
-            }
-            
-            /* Treat each row of cells as a table row */
-            .calendar-grid .header-cell,
-            .calendar-grid .name-cell,
-            .calendar-grid .time-cell {
-                display: inline-table !important;
                 border: 1px solid black !important;
-                padding: 8px 4px !important;
+                padding: 8px !important;
                 vertical-align: middle !important;
                 text-align: center !important;
-                page-break-inside: avoid !important;
-                height: auto !important;
-                min-height: 30px !important;
-                box-sizing: border-box !important;
-                float: none !important;
-                position: static !important;
+                font-size: 11pt !important;
             }
             
-            /* Fix grid layout for print */
-            .calendar-grid::after {
-                content: "";
-                display: table;
-                clear: both;
-            }
-            
-            /* Headers row */
-            .calendar-grid .header-cell {
+            #printTable th {
                 background: #343a40 !important;
                 color: white !important;
                 font-weight: bold !important;
-                font-size: 11pt !important;
-                white-space: nowrap !important;
-                width: calc(85% / 7) !important;
             }
             
-            .calendar-grid .header-cell.corner-cell {
-                font-size: 10pt !important;
-                width: 15% !important;
-            }
-            
-            /* Worker names column */
-            .calendar-grid .name-cell {
+            #printTable td:first-child {
                 background: #212529 !important;
                 color: white !important;
                 font-weight: bold !important;
-                font-size: 10pt !important;
-                white-space: nowrap !important;
                 width: 15% !important;
-                clear: both !important;
             }
             
-            /* Time cells */
-            .calendar-grid .time-cell {
+            #printTable td {
                 background: white !important;
                 color: black !important;
-                font-size: 9pt !important;
-                width: calc(85% / 7) !important;
             }
             
-            .calendar-grid .time-cell.assigned {
-                font-weight: bold !important;
-            }
+            /* Preserve place colors */
+            #printTable td.place-color-0 { background-color: #d1ecf1 !important; }
+            #printTable td.place-color-1 { background-color: #d4edda !important; }
+            #printTable td.place-color-2 { background-color: #fff3cd !important; }
+            #printTable td.place-color-3 { background-color: #f8d7da !important; }
+            #printTable td.place-color-4 { background-color: #e2e3e5 !important; }
+            #printTable td.place-color-5 { background-color: #cfe2ff !important; }
+            #printTable td.place-color-6 { background-color: #e8daef !important; }
             
-            /* Preserve place colors with stronger specificity */
-            .calendar-grid .time-cell.place-color-0 { background-color: #d1ecf1 !important; }
-            .calendar-grid .time-cell.place-color-1 { background-color: #d4edda !important; }
-            .calendar-grid .time-cell.place-color-2 { background-color: #fff3cd !important; }
-            .calendar-grid .time-cell.place-color-3 { background-color: #f8d7da !important; }
-            .calendar-grid .time-cell.place-color-4 { background-color: #e2e3e5 !important; }
-            .calendar-grid .time-cell.place-color-5 { background-color: #cfe2ff !important; }
-            .calendar-grid .time-cell.place-color-6 { background-color: #e8daef !important; }
+            /* Hide original calendar grid */
+            .calendar-grid {
+                display: none !important;
+            }
         }
     </style>
 
@@ -1094,4 +1061,5 @@
     </script>
 </body>
 </html>
+
 
