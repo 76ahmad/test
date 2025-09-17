@@ -303,72 +303,63 @@
                 page-break-inside: auto;
                 display: table !important;
                 border-collapse: collapse !important;
+                table-layout: fixed !important;
             }
             
-            .calendar-grid > div {
+            /* Create proper table rows for headers */
+            .print-header-row {
+                display: table-row !important;
+            }
+            
+            .print-header-row .header-cell {
                 display: table-cell !important;
                 border: 1pt solid black !important;
                 padding: 6pt !important;
                 vertical-align: middle !important;
                 text-align: center !important;
-            }
-            
-            .calendar-grid .header-cell {
                 background: #343a40 !important;
                 color: white !important;
                 font-weight: bold !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
-                display: table-cell !important;
             }
             
-            .calendar-grid .name-cell {
+            /* Create proper table rows for workers */
+            .print-worker-row {
+                display: table-row !important;
+            }
+            
+            .print-worker-row .name-cell,
+            .print-worker-row .time-cell {
+                display: table-cell !important;
+                border: 1pt solid black !important;
+                padding: 6pt !important;
+                vertical-align: middle !important;
+                text-align: center !important;
+                page-break-inside: avoid !important;
+            }
+            
+            .print-worker-row .name-cell {
                 background: #212529 !important;
                 color: white !important;
                 font-weight: bold !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
-                display: table-cell !important;
-                page-break-inside: avoid !important;
-                page-break-after: avoid !important;
             }
             
-            .calendar-grid .time-cell {
+            .print-worker-row .time-cell {
                 background: white !important;
                 color: black !important;
-                display: table-cell !important;
-                page-break-inside: avoid !important;
             }
             
-            .calendar-grid .time-cell.assigned {
+            .print-worker-row .time-cell.assigned {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
             
-            /* Ensure table rows don't break */
-            .calendar-grid .name-cell,
-            .calendar-grid .time-cell {
-                page-break-inside: avoid !important;
-            }
-            
-            /* Create proper table structure for printing */
-            .calendar-grid {
-                display: table !important;
-                table-layout: fixed !important;
-                width: 100% !important;
-            }
-            
-            .calendar-grid > div:nth-child(8n+1) {
-                display: table-row !important;
-            }
-            
-            .calendar-grid > div:not(:nth-child(8n+1)) {
-                display: table-cell !important;
-            }
-            
-            /* Force page breaks between logical sections if needed */
-            .page-break {
-                page-break-before: always !important;
+            /* Hide all non-print elements */
+            .calendar-grid > div:not(.print-header-row):not(.print-worker-row) {
+                display: none !important;
             }
         }
     </style>
@@ -485,8 +476,8 @@
     </div>
 
     <script>
-        // Global variables
-        const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+        // Global variables - REMOVED SATURDAY
+        const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
         const workers = [];
         const places = [];
 
@@ -496,17 +487,34 @@
             calendar.innerHTML = '';
             calendar.style.gridTemplateColumns = `repeat(${days.length + 1}, 1fr)`;
 
+            // Create header row for print
+            const headerRow = document.createElement('div');
+            headerRow.className = 'print-header-row';
+            
             // Add empty header cell
-            calendar.appendChild(createCell('', 'header-cell'));
+            const emptyHeader = createCell('', 'header-cell');
+            headerRow.appendChild(emptyHeader);
+            calendar.appendChild(emptyHeader);
             
             // Add day headers
-            days.forEach(day => calendar.appendChild(createCell(day, 'header-cell')));
+            days.forEach(day => {
+                const dayHeader = createCell(day, 'header-cell');
+                headerRow.appendChild(dayHeader);
+                calendar.appendChild(dayHeader);
+            });
+            
+            // Add the header row as a single element for print
+            calendar.appendChild(headerRow);
 
             // Add worker rows
             workers.forEach(worker => {
+                const workerRow = document.createElement('div');
+                workerRow.className = 'print-worker-row';
+                
                 const name = typeof worker === 'string' ? worker : worker.name;
                 const nameCell = createCell(name, 'name-cell');
                 nameCell.onclick = () => showWorkerDetails(worker);
+                workerRow.appendChild(nameCell);
                 calendar.appendChild(nameCell);
                 
                 // Add time cells for each day
@@ -519,8 +527,12 @@
                             openPlaceSelector(cell);
                         }
                     };
+                    workerRow.appendChild(cell);
                     calendar.appendChild(cell);
                 });
+                
+                // Add the worker row as a single element for print
+                calendar.appendChild(workerRow);
             });
         }
 
