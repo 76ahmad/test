@@ -54,32 +54,59 @@
             margin: 2rem;
         }
         
-        .calendar-grid {
-            display: grid;
-            min-width: 800px;
-            background: #e9ecef;
+        /* Table-based calendar for better printing */
+        .calendar-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
             border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
-        .calendar-grid .header-cell, 
-        .calendar-grid .name-cell, 
-        .calendar-grid .time-cell {
-            padding: 1rem;
+        .calendar-table th,
+        .calendar-table td {
             border: 1px solid #ccc;
+            padding: 12px 8px;
             text-align: center;
+            vertical-align: middle;
+            min-width: 100px;
+        }
+        
+        .calendar-table th {
+            background: #343a40;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .calendar-table th.corner-cell {
+            font-size: 0.8rem;
+            background: #343a40;
+        }
+        
+        .calendar-table .name-cell {
+            background: #212529;
+            color: white;
+            font-weight: bold;
             cursor: pointer;
+            min-width: 120px;
+        }
+        
+        .calendar-table .time-cell {
             background: white;
+            cursor: pointer;
             transition: background 0.2s;
+            min-height: 40px;
         }
         
-        .calendar-grid .time-cell:hover {
-            background: #d6f0ff;
+        .calendar-table .time-cell:hover {
+            background: #f8f9fa;
         }
         
-        .calendar-grid .time-cell.assigned {
-            background: #d4edda;
-            border-color: #28a745;
+        .calendar-table .time-cell.assigned {
+            background: #e9ecef;
+            font-weight: bold;
         }
         
         .modal {
@@ -177,30 +204,6 @@
             background: #138496;
         }
         
-        .header-cell {
-            background: #343a40 !important;
-            color: #fff !important;
-            font-weight: bold;
-        }
-        
-        .header-cell.corner-cell {
-            font-size: 0.9em;
-        }
-        
-        .name-cell {
-            background: #212529 !important;
-            color: #fff !important;
-            font-weight: bold;
-        }
-        
-        .place-color-0 { background-color: #d1ecf1 !important; border-color: #0c5460 !important; }
-        .place-color-1 { background-color: #d4edda !important; border-color: #155724 !important; }
-        .place-color-2 { background-color: #fff3cd !important; border-color: #856404 !important; }
-        .place-color-3 { background-color: #f8d7da !important; border-color: #721c24 !important; }
-        .place-color-4 { background-color: #e2e3e5 !important; border-color: #6c757d !important; }
-        .place-color-5 { background-color: #cfe2ff !important; border-color: #084298 !important; }
-        .place-color-6 { background-color: #e8daef !important; border-color: #512e5f !important; }
-        
         #assignmentSummary {
             text-align: center;
             margin-top: 20px;
@@ -259,25 +262,25 @@
             font-size: 0.85em;
             color: #888;
         }
-        
-     /* Print styles */
+
+        /* Print styles - COMPLETELY REWRITTEN */
         @page {
             size: A4 landscape;
-            margin: 10mm;
+            margin: 15mm;
         }
         
         @media print {
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
-                color-adjust: exact !important;
             }
             
             body {
                 background: white !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                font-size: 12pt !important;
+                font-family: Arial, sans-serif !important;
+                font-size: 12px !important;
                 color: black !important;
             }
             
@@ -287,7 +290,6 @@
                 border-radius: 0 !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                width: 100% !important;
                 max-width: none !important;
             }
             
@@ -295,8 +297,7 @@
             .header,
             .controls, 
             .instructions,
-            #assignmentSummary,
-            .modal {
+            #assignmentSummary {
                 display: none !important;
             }
             
@@ -304,64 +305,71 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 overflow: visible !important;
-                width: 100% !important;
             }
             
-            /* Create table wrapper for printing */
-            #printTable {
-                display: table !important;
+            /* Print table styles */
+            .calendar-table {
                 width: 100% !important;
                 border-collapse: collapse !important;
-                table-layout: fixed !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            
-            #printTable tr {
-                display: table-row !important;
+                background: white !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
                 page-break-inside: avoid !important;
             }
             
-            #printTable th,
-            #printTable td {
-                display: table-cell !important;
-                border: 1px solid black !important;
+            .calendar-table th,
+            .calendar-table td {
+                border: 2px solid black !important;
                 padding: 8px !important;
-                vertical-align: middle !important;
                 text-align: center !important;
-                font-size: 11pt !important;
+                vertical-align: middle !important;
+                font-size: 11px !important;
+                line-height: 1.2 !important;
             }
             
-            #printTable th {
-                background: #343a40 !important;
-                color: white !important;
+            .calendar-table th {
+                background: #f0f0f0 !important;
+                color: black !important;
+                font-weight: bold !important;
+                font-size: 12px !important;
+            }
+            
+            .calendar-table th.corner-cell {
+                font-size: 10px !important;
+                background: #f0f0f0 !important;
                 font-weight: bold !important;
             }
             
-            #printTable td:first-child {
-                background: #212529 !important;
-                color: white !important;
+            .calendar-table .name-cell {
+                background: #e0e0e0 !important;
+                color: black !important;
                 font-weight: bold !important;
-                width: 15% !important;
+                font-size: 11px !important;
             }
             
-            #printTable td {
+            .calendar-table .time-cell {
                 background: white !important;
+                color: black !important;
+                font-size: 10px !important;
+                min-height: 25px !important;
+            }
+            
+            .calendar-table .time-cell.assigned {
+                background: #f5f5f5 !important;
+                font-weight: bold !important;
                 color: black !important;
             }
             
-            /* Preserve place colors */
-            #printTable td.place-color-0 { background-color: #d1ecf1 !important; }
-            #printTable td.place-color-1 { background-color: #d4edda !important; }
-            #printTable td.place-color-2 { background-color: #fff3cd !important; }
-            #printTable td.place-color-3 { background-color: #f8d7da !important; }
-            #printTable td.place-color-4 { background-color: #e2e3e5 !important; }
-            #printTable td.place-color-5 { background-color: #cfe2ff !important; }
-            #printTable td.place-color-6 { background-color: #e8daef !important; }
+            /* Ensure proper column widths for printing */
+            .calendar-table th:first-child,
+            .calendar-table td:first-child {
+                width: 15% !important;
+                min-width: 100px !important;
+            }
             
-            /* Hide original calendar grid */
-            .calendar-grid {
-                display: none !important;
+            .calendar-table th:not(:first-child),
+            .calendar-table td:not(:first-child) {
+                width: 12.14% !important; /* (100% - 15%) / 7 days */
             }
         }
     </style>
@@ -392,7 +400,9 @@
         </div>
 
         <div class="calendar-container">
-            <div class="calendar-grid" id="calendar"></div>
+            <table class="calendar-table" id="calendarTable">
+                <!-- Table content will be generated by JavaScript -->
+            </table>
         </div>
         
         <div id="assignmentSummary"></div>
@@ -403,7 +413,7 @@
         </div>
     </div>
 
-    <!-- Modals -->
+    <!-- Modals (same as before) -->
     <div class="modal" id="placeSelectorModal">
         <div class="modal-content">
             <h3>בחר מקום עבודה</h3>
@@ -483,45 +493,45 @@
         const workers = [];
         const places = [];
 
-        // Calendar generation - UPDATED FUNCTION
+        // Calendar generation using table structure
         function generateCalendar() {
-            const calendar = document.getElementById("calendar");
-            calendar.innerHTML = '';
+            const table = document.getElementById("calendarTable");
+            table.innerHTML = '';
             
-            // Set grid columns for screen display
-            calendar.style.gridTemplateColumns = `repeat(${days.length + 1}, 1fr)`;
-
-            // Create header row wrapper
-            const headerRow = document.createElement('div');
-            headerRow.className = 'grid-row';
+            // Create header row
+            const headerRow = document.createElement('tr');
             
-            // Add corner cell with label "עובדים / ימים"
-            const cornerCell = createCell('עובדים / ימים', 'header-cell corner-cell');
-            headerRow.appendChild(cornerCell);
-            calendar.appendChild(cornerCell);
+            // Add corner cell
+            const cornerTh = document.createElement('th');
+            cornerTh.textContent = 'עובדים / ימים';
+            cornerTh.className = 'corner-cell';
+            headerRow.appendChild(cornerTh);
             
             // Add day headers
             days.forEach(day => {
-                const dayCell = createCell(day, 'header-cell');
-                headerRow.appendChild(dayCell);
-                calendar.appendChild(dayCell);
+                const dayTh = document.createElement('th');
+                dayTh.textContent = day;
+                headerRow.appendChild(dayTh);
             });
+            
+            table.appendChild(headerRow);
 
             // Add worker rows
             workers.forEach(worker => {
-                // Create row wrapper
-                const workerRow = document.createElement('div');
-                workerRow.className = 'grid-row';
+                const row = document.createElement('tr');
                 
+                // Worker name cell
+                const nameCell = document.createElement('td');
+                nameCell.className = 'name-cell';
                 const name = typeof worker === 'string' ? worker : worker.name;
-                const nameCell = createCell(name, 'name-cell');
+                nameCell.textContent = name;
                 nameCell.onclick = () => showWorkerDetails(worker);
-                workerRow.appendChild(nameCell);
-                calendar.appendChild(nameCell);
+                row.appendChild(nameCell);
                 
                 // Add time cells for each day
                 days.forEach(() => {
-                    const cell = createCell('', 'time-cell');
+                    const cell = document.createElement('td');
+                    cell.className = 'time-cell';
                     cell.onclick = () => {
                         if (cell.textContent.trim()) {
                             clearAssignment(cell);
@@ -529,17 +539,11 @@
                             openPlaceSelector(cell);
                         }
                     };
-                    workerRow.appendChild(cell);
-                    calendar.appendChild(cell);
+                    row.appendChild(cell);
                 });
+                
+                table.appendChild(row);
             });
-        }
-
-        function createCell(text, className) {
-            const div = document.createElement('div');
-            div.className = className;
-            div.textContent = text;
-            return div;
         }
 
         // Place selector functions
@@ -547,13 +551,13 @@
             const container = document.getElementById("placeChoiceContainer");
             container.innerHTML = '';
             
-            places.forEach((place, index) => {
+            places.forEach((place) => {
                 const btn = document.createElement('button');
                 btn.className = 'place-btn';
                 btn.textContent = place;
                 btn.onclick = () => {
                     cell.textContent = place;
-                    cell.className = 'time-cell assigned place-color-' + (index % 7);
+                    cell.classList.add('assigned');
                     closePlaceSelector();
                     autoSaveSchedule();
                     updateAssignmentSummary();
@@ -571,10 +575,6 @@
         function clearAssignment(cell) {
             cell.textContent = '';
             cell.classList.remove('assigned');
-            // Remove all place-color classes
-            for (let i = 0; i < 7; i++) {
-                cell.classList.remove('place-color-' + i);
-            }
             updateAssignmentSummary();
             autoSaveSchedule();
         }
@@ -824,17 +824,9 @@
             const cells = document.querySelectorAll('.time-cell');
             cells.forEach((cell, index) => {
                 if (cell.textContent.trim()) {
-                    let colorClass = '';
-                    for (let i = 0; i < 7; i++) {
-                        if (cell.classList.contains('place-color-' + i)) {
-                            colorClass = 'place-color-' + i;
-                            break;
-                        }
-                    }
                     data.assignments.push({ 
                         index, 
-                        value: cell.textContent.trim(),
-                        colorClass: colorClass 
+                        value: cell.textContent.trim()
                     });
                 }
             });
@@ -862,9 +854,6 @@
                         if (cells[a.index]) {
                             cells[a.index].textContent = a.value;
                             cells[a.index].classList.add('assigned');
-                            if (a.colorClass) {
-                                cells[a.index].classList.add(a.colorClass);
-                            }
                         }
                     });
                     
@@ -891,17 +880,9 @@
             const cells = document.querySelectorAll('.time-cell');
             cells.forEach((cell, index) => {
                 if (cell.textContent.trim()) {
-                    let colorClass = '';
-                    for (let i = 0; i < 7; i++) {
-                        if (cell.classList.contains('place-color-' + i)) {
-                            colorClass = 'place-color-' + i;
-                            break;
-                        }
-                    }
                     data.assignments.push({ 
                         index, 
-                        value: cell.textContent.trim(),
-                        colorClass: colorClass 
+                        value: cell.textContent.trim()
                     });
                 }
             });
@@ -929,15 +910,33 @@
             }
         }
 
-        // Print function
+        // Enhanced print function
         function printSchedule() {
-            const summary = document.getElementById('assignmentSummary');
-            const originalDisplay = summary.style.display;
-            summary.style.display = 'none';
-            
+            // Add print title
+            const printTitle = document.createElement('div');
+            printTitle.innerHTML = '<h2 style="text-align:center; margin-bottom:20px; font-size:18px; color:black;">לוח משמרות - ' + new Date().toLocaleDateString('he-IL') + '</h2>';
+            printTitle.style.display = 'none';
+            printTitle.className = 'print-title';
+            document.body.appendChild(printTitle);
+
+            // Add print styles for title
+            const printStyle = document.createElement('style');
+            printStyle.innerHTML = `
+                @media print {
+                    .print-title {
+                        display: block !important;
+                        page-break-after: avoid !important;
+                        margin-bottom: 15px !important;
+                    }
+                }
+            `;
+            document.head.appendChild(printStyle);
+
             window.print();
-            
-            summary.style.display = originalDisplay;
+
+            // Cleanup
+            document.body.removeChild(printTitle);
+            document.head.removeChild(printStyle);
         }
 
         // Export to Excel function
@@ -1042,9 +1041,6 @@
                             if (cells[a.index]) {
                                 cells[a.index].textContent = a.value;
                                 cells[a.index].classList.add('assigned');
-                                if (a.colorClass) {
-                                    cells[a.index].classList.add(a.colorClass);
-                                }
                             }
                         });
                     }
@@ -1061,5 +1057,3 @@
     </script>
 </body>
 </html>
-
-
