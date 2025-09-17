@@ -262,15 +262,22 @@
         
         /* Print styles */
         @page {
-            size: A4 portrait;
+            size: A4 landscape;
             margin: 10mm;
         }
         
         @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            
             body {
                 background: white !important;
                 padding: 0 !important;
-                font-size: 11pt !important;
+                margin: 0 !important;
+                font-size: 10pt !important;
                 color: black !important;
             }
             
@@ -280,14 +287,11 @@
                 border-radius: 0 !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                width: 100% !important;
             }
             
-            /* Hide header completely */
-            .header {
-                display: none !important;
-            }
-            
-            /* Hide all controls and instructions */
+            /* Hide non-printable elements */
+            .header,
             .controls, 
             .instructions,
             #assignmentSummary {
@@ -296,21 +300,30 @@
             
             .calendar-container {
                 margin: 0 !important;
+                padding: 0 !important;
                 overflow: visible !important;
+                width: 100% !important;
             }
             
+            /* Convert grid to table for printing */
             .calendar-grid {
+                display: block !important;
                 background: white !important;
                 border-radius: 0 !important;
-                min-width: auto !important;
                 width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            /* Create table structure */
+            .print-table {
                 display: table !important;
+                width: 100% !important;
                 border-collapse: collapse !important;
                 table-layout: fixed !important;
             }
             
-            /* Create proper table rows */
-            .calendar-grid .grid-row {
+            .print-row {
                 display: table-row !important;
             }
             
@@ -318,59 +331,54 @@
             .calendar-grid .name-cell,
             .calendar-grid .time-cell {
                 display: table-cell !important;
-                border: 1pt solid black !important;
-                padding: 4pt !important;
+                border: 1px solid black !important;
+                padding: 5px !important;
                 vertical-align: middle !important;
                 text-align: center !important;
                 page-break-inside: avoid !important;
+                height: 25px !important;
             }
             
             .calendar-grid .header-cell {
                 background: #343a40 !important;
                 color: white !important;
                 font-weight: bold !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                font-size: 10pt !important;
+                font-size: 9pt !important;
+                white-space: nowrap !important;
             }
             
             .calendar-grid .header-cell.corner-cell {
-                font-size: 9pt !important;
+                font-size: 8pt !important;
             }
             
             .calendar-grid .name-cell {
                 background: #212529 !important;
                 color: white !important;
                 font-weight: bold !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                font-size: 10pt !important;
+                font-size: 9pt !important;
+                white-space: nowrap !important;
                 width: 15% !important;
             }
             
             .calendar-grid .time-cell {
                 background: white !important;
                 color: black !important;
-                font-size: 9pt !important;
-                width: calc(85% / 7) !important;
+                font-size: 8pt !important;
+                width: auto !important;
             }
             
             .calendar-grid .time-cell.assigned {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
+                font-weight: bold !important;
             }
             
-            /* Force color preservation for place colors */
-            .place-color-0,
-            .place-color-1,
-            .place-color-2,
-            .place-color-3,
-            .place-color-4,
-            .place-color-5,
-            .place-color-6 {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
+            /* Preserve place colors */
+            .place-color-0 { background: #d1ecf1 !important; }
+            .place-color-1 { background: #d4edda !important; }
+            .place-color-2 { background: #fff3cd !important; }
+            .place-color-3 { background: #f8d7da !important; }
+            .place-color-4 { background: #e2e3e5 !important; }
+            .place-color-5 { background: #cfe2ff !important; }
+            .place-color-6 { background: #e8daef !important; }
         }
     </style>
 
