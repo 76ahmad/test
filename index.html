@@ -260,7 +260,7 @@
             color: #888;
         }
         
-        /* Print styles */
+     /* Print styles */
         @page {
             size: A4 landscape;
             margin: 10mm;
@@ -288,13 +288,15 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 width: 100% !important;
+                max-width: 100% !important;
             }
             
             /* Hide non-printable elements */
             .header,
             .controls, 
             .instructions,
-            #assignmentSummary {
+            #assignmentSummary,
+            .modal {
                 display: none !important;
             }
             
@@ -305,80 +307,95 @@
                 width: 100% !important;
             }
             
-            /* Convert grid to table for printing */
+            /* Create table for printing */
             .calendar-grid {
-                display: block !important;
+                display: table !important;
                 background: white !important;
                 border-radius: 0 !important;
                 width: 100% !important;
-                margin: 0 !important;
+                margin: 0 auto !important;
                 padding: 0 !important;
-            }
-            
-            /* Create table structure */
-            .print-table {
-                display: table !important;
-                width: 100% !important;
                 border-collapse: collapse !important;
                 table-layout: fixed !important;
+                min-width: unset !important;
             }
             
-            .print-row {
-                display: table-row !important;
+            /* Create rows structure */
+            .calendar-grid .header-cell:first-child {
+                display: table-cell !important;
+                width: 15% !important;
             }
             
+            /* Treat each row of cells as a table row */
             .calendar-grid .header-cell,
             .calendar-grid .name-cell,
             .calendar-grid .time-cell {
-                display: table-cell !important;
+                display: inline-table !important;
                 border: 1px solid black !important;
-                padding: 5px !important;
+                padding: 8px 4px !important;
                 vertical-align: middle !important;
                 text-align: center !important;
                 page-break-inside: avoid !important;
-                height: 25px !important;
+                height: auto !important;
+                min-height: 30px !important;
+                box-sizing: border-box !important;
+                float: none !important;
+                position: static !important;
             }
             
+            /* Fix grid layout for print */
+            .calendar-grid::after {
+                content: "";
+                display: table;
+                clear: both;
+            }
+            
+            /* Headers row */
             .calendar-grid .header-cell {
                 background: #343a40 !important;
                 color: white !important;
                 font-weight: bold !important;
-                font-size: 9pt !important;
+                font-size: 11pt !important;
                 white-space: nowrap !important;
+                width: calc(85% / 7) !important;
             }
             
             .calendar-grid .header-cell.corner-cell {
-                font-size: 8pt !important;
+                font-size: 10pt !important;
+                width: 15% !important;
             }
             
+            /* Worker names column */
             .calendar-grid .name-cell {
                 background: #212529 !important;
                 color: white !important;
                 font-weight: bold !important;
-                font-size: 9pt !important;
+                font-size: 10pt !important;
                 white-space: nowrap !important;
                 width: 15% !important;
+                clear: both !important;
             }
             
+            /* Time cells */
             .calendar-grid .time-cell {
                 background: white !important;
                 color: black !important;
-                font-size: 8pt !important;
-                width: auto !important;
+                font-size: 9pt !important;
+                width: calc(85% / 7) !important;
             }
             
             .calendar-grid .time-cell.assigned {
                 font-weight: bold !important;
             }
             
-            /* Preserve place colors */
-            .place-color-0 { background: #d1ecf1 !important; }
-            .place-color-1 { background: #d4edda !important; }
-            .place-color-2 { background: #fff3cd !important; }
-            .place-color-3 { background: #f8d7da !important; }
-            .place-color-4 { background: #e2e3e5 !important; }
-            .place-color-5 { background: #cfe2ff !important; }
-            .place-color-6 { background: #e8daef !important; }
+            /* Preserve place colors with stronger specificity */
+            .calendar-grid .time-cell.place-color-0 { background-color: #d1ecf1 !important; }
+            .calendar-grid .time-cell.place-color-1 { background-color: #d4edda !important; }
+            .calendar-grid .time-cell.place-color-2 { background-color: #fff3cd !important; }
+            .calendar-grid .time-cell.place-color-3 { background-color: #f8d7da !important; }
+            .calendar-grid .time-cell.place-color-4 { background-color: #e2e3e5 !important; }
+            .calendar-grid .time-cell.place-color-5 { background-color: #cfe2ff !important; }
+            .calendar-grid .time-cell.place-color-6 { background-color: #e8daef !important; }
         }
     </style>
 
@@ -1077,3 +1094,4 @@
     </script>
 </body>
 </html>
+
