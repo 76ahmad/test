@@ -493,8 +493,53 @@
         const workers = [];
         const places = [];
 
+        // Function to preserve current assignments before regenerating calendar
+        function preserveAssignments() {
+            const assignments = [];
+            const rows = document.querySelectorAll('#calendarTable tbody tr, #calendarTable tr:not(:first-child)');
+            
+            rows.forEach((row, workerIndex) => {
+                const cells = row.querySelectorAll('.time-cell');
+                cells.forEach((cell, dayIndex) => {
+                    if (cell.textContent.trim()) {
+                        assignments.push({
+                            workerIndex: workerIndex,
+                            dayIndex: dayIndex,
+                            value: cell.textContent.trim(),
+                            assigned: cell.classList.contains('assigned')
+                        });
+                    }
+                });
+            });
+            
+            return assignments;
+        }
+
+        // Function to restore assignments after regenerating calendar
+        function restoreAssignments(assignments) {
+            const rows = document.querySelectorAll('#calendarTable tbody tr, #calendarTable tr:not(:first-child)');
+            
+            assignments.forEach(assignment => {
+                if (rows[assignment.workerIndex]) {
+                    const cells = rows[assignment.workerIndex].querySelectorAll('.time-cell');
+                    if (cells[assignment.dayIndex]) {
+                        cells[assignment.dayIndex].textContent = assignment.value;
+                        if (assignment.assigned) {
+                            cells[assignment.dayIndex].classList.add('assigned');
+                        }
+                    }
+                }
+            });
+        }
+
         // Calendar generation using table structure
-        function generateCalendar() {
+        function generateCalendar(preserveData = false) {
+            // Preserve current assignments if requested
+            let currentAssignments = [];
+            if (preserveData) {
+                currentAssignments = preserveAssignments();
+            }
+            
             const table = document.getElementById("calendarTable");
             table.innerHTML = '';
             
@@ -544,6 +589,11 @@
                 
                 table.appendChild(row);
             });
+            
+            // Restore assignments if we were preserving data
+            if (preserveData && currentAssignments.length > 0) {
+                restoreAssignments(currentAssignments);
+            }
         }
 
         // Place selector functions
@@ -607,7 +657,8 @@
                     phone: phone || '' 
                 });
                 closeAddWorkerModal();
-                generateCalendar();
+                // Use preserveData=true to keep current assignments
+                generateCalendar(true);
                 autoSaveSchedule();
             } else {
                 alert("נא למלא את שם העובד.");
@@ -651,7 +702,8 @@
                 workers.splice(index, 1);
                 autoSaveSchedule();
                 showManageWorkersModal();
-                generateCalendar();
+                // Use preserveData=true but it won't preserve assignments for removed workers
+                generateCalendar(false); // Actually, we should regenerate without preserving since worker was removed
             }
         }
 
@@ -679,7 +731,8 @@
                     phone: phone || '' 
                 };
                 autoSaveSchedule();
-                generateCalendar();
+                // Use preserveData=true to keep current assignments
+                generateCalendar(true);
                 closeEditWorkerModal();
             } else {
                 alert("נא למלא את שם העובד.");
