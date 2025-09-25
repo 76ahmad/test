@@ -245,7 +245,8 @@
         
         .worker-row, .place-row {
             display: flex;
-            justify-content: space-between;            align-items: center;
+            justify-content: space-between;
+            align-items: center;
             background: #333;
             padding: 0.5rem;
             border-radius: 6px;
@@ -262,10 +263,10 @@
             color: #888;
         }
 
-        /* Print styles - COMPLETELY REWRITTEN */
+        /* Print styles - OPTIMIZED FOR MANY WORKERS */
         @page {
             size: A4 landscape;
-            margin: 15mm;
+            margin: 10mm;
         }
         
         @media print {
@@ -279,7 +280,7 @@
                 padding: 0 !important;
                 margin: 0 !important;
                 font-family: Arial, sans-serif !important;
-                font-size: 12px !important;
+                font-size: 9px !important;
                 color: black !important;
             }
             
@@ -306,7 +307,7 @@
                 overflow: visible !important;
             }
             
-            /* Print table styles */
+            /* Print table styles - COMPRESSED */
             .calendar-table {
                 width: 100% !important;
                 border-collapse: collapse !important;
@@ -314,43 +315,54 @@
                 border-radius: 0 !important;
                 box-shadow: none !important;
                 page-break-inside: avoid !important;
+                table-layout: fixed !important;
             }
             
             .calendar-table th,
             .calendar-table td {
-                border: 2px solid black !important;
-                padding: 8px !important;
+                border: 1px solid black !important;
+                padding: 3px 2px !important;
                 text-align: center !important;
                 vertical-align: middle !important;
-                font-size: 11px !important;
-                line-height: 1.2 !important;
+                font-size: 8px !important;
+                line-height: 1.1 !important;
+                height: 18px !important;
+                max-height: 18px !important;
+                overflow: hidden !important;
             }
             
             .calendar-table th {
                 background: #f0f0f0 !important;
                 color: black !important;
                 font-weight: bold !important;
-                font-size: 12px !important;
+                font-size: 9px !important;
+                height: 20px !important;
+                max-height: 20px !important;
             }
             
             .calendar-table th.corner-cell {
-                font-size: 10px !important;
+                font-size: 7px !important;
                 background: #f0f0f0 !important;
                 font-weight: bold !important;
+                padding: 2px 1px !important;
             }
             
             .calendar-table .name-cell {
                 background: #e0e0e0 !important;
                 color: black !important;
                 font-weight: bold !important;
-                font-size: 11px !important;
+                font-size: 8px !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
             }
             
             .calendar-table .time-cell {
                 background: white !important;
                 color: black !important;
-                font-size: 10px !important;
-                min-height: 25px !important;
+                font-size: 7px !important;
+                min-height: 18px !important;
+                max-height: 18px !important;
+                font-weight: normal !important;
             }
             
             .calendar-table .time-cell.assigned {
@@ -359,16 +371,17 @@
                 color: black !important;
             }
             
-            /* Ensure proper column widths for printing */
+            /* Ensure proper column widths for printing - COMPRESSED */
             .calendar-table th:first-child,
             .calendar-table td:first-child {
-                width: 15% !important;
-                min-width: 100px !important;
+                width: 12% !important;
+                min-width: 60px !important;
+                max-width: 80px !important;
             }
             
             .calendar-table th:not(:first-child),
             .calendar-table td:not(:first-child) {
-                width: 12.14% !important; /* (100% - 15%) / 7 days */
+                width: 12.57% !important; /* (100% - 12%) / 7 days */
             }
         }
     </style>
