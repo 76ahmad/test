@@ -245,8 +245,7 @@
         
         .worker-row, .place-row {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            justify-content: space-between;            align-items: center;
             background: #333;
             padding: 0.5rem;
             border-radius: 6px;
@@ -847,21 +846,35 @@
 
         // Summary and save functions
         function updateAssignmentSummary() {
-            const counters = {};
-            let total = 0;
-            places.forEach(place => counters[place] = 0);
+            const workerDays = {};
+            let totalDays = 0;
 
-            document.querySelectorAll('.time-cell').forEach(cell => {
-                const place = cell.textContent.trim();
-                if (place && counters.hasOwnProperty(place)) {
-                    counters[place]++;
-                    total++;
+            // Initialize counters for all workers
+            workers.forEach(worker => {
+                const name = typeof worker === 'string' ? worker : worker.name;
+                workerDays[name] = 0;
+            });
+
+            // Count days for each worker
+            const rows = document.querySelectorAll('#calendarTable tbody tr, #calendarTable tr:not(:first-child)');
+            rows.forEach((row, workerIndex) => {
+                if (workers[workerIndex]) {
+                    const workerName = typeof workers[workerIndex] === 'string' ? workers[workerIndex] : workers[workerIndex].name;
+                    const cells = row.querySelectorAll('.time-cell');
+                    cells.forEach(cell => {
+                        if (cell.textContent.trim()) {
+                            workerDays[workerName]++;
+                            totalDays++;
+                        }
+                    });
                 }
             });
 
-            let summary = `סה"כ הקצאות: ${total}<br>`;
-            for (const [place, count] of Object.entries(counters)) {
-                summary += `${place}: ${count} עובדים<br>`;
+            let summary = `סה"כ ימי עבודה: ${totalDays}<br><br>`;
+            summary += '<strong>ימי עבודה לכל עובד:</strong><br>';
+            
+            for (const [workerName, days] of Object.entries(workerDays)) {
+                summary += `${workerName}: ${days} ימים<br>`;
             }
 
             document.getElementById('assignmentSummary').innerHTML = summary;
