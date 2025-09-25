@@ -991,6 +991,36 @@
 
         // Enhanced print function
         function printSchedule() {
+            // Calculate days for each worker before printing
+            const workerDays = {};
+            workers.forEach((worker, workerIndex) => {
+                const name = typeof worker === 'string' ? worker : worker.name;
+                workerDays[name] = 0;
+                
+                const rows = document.querySelectorAll('#calendarTable tbody tr, #calendarTable tr:not(:first-child)');
+                if (rows[workerIndex]) {
+                    const cells = rows[workerIndex].querySelectorAll('.time-cell');
+                    cells.forEach(cell => {
+                        if (cell.textContent.trim()) {
+                            workerDays[name]++;
+                        }
+                    });
+                }
+            });
+
+            // Temporarily modify worker name cells to include day counts
+            const nameCells = document.querySelectorAll('.name-cell');
+            const originalTexts = [];
+            
+            nameCells.forEach((cell, index) => {
+                if (workers[index]) {
+                    const workerName = typeof workers[index] === 'string' ? workers[index] : workers[index].name;
+                    originalTexts.push(cell.textContent);
+                    const dayCount = workerDays[workerName] || 0;
+                    cell.innerHTML = `${workerName}<br><small>(${dayCount} ימים)</small>`;
+                }
+            });
+
             // Add print title
             const printTitle = document.createElement('div');
             printTitle.innerHTML = '<h2 style="text-align:center; margin-bottom:20px; font-size:18px; color:black;">לוח משמרות - ' + new Date().toLocaleDateString('he-IL') + '</h2>';
@@ -998,7 +1028,7 @@
             printTitle.className = 'print-title';
             document.body.appendChild(printTitle);
 
-            // Add print styles for title
+            // Add print styles for title and day counts
             const printStyle = document.createElement('style');
             printStyle.innerHTML = `
                 @media print {
@@ -1007,15 +1037,29 @@
                         page-break-after: avoid !important;
                         margin-bottom: 15px !important;
                     }
+                    .calendar-table .name-cell small {
+                        font-size: 6px !important;
+                        font-weight: normal !important;
+                        color: #666 !important;
+                    }
                 }
             `;
             document.head.appendChild(printStyle);
 
             window.print();
 
-            // Cleanup
-            document.body.removeChild(printTitle);
-            document.head.removeChild(printStyle);
+            // Restore original texts after printing
+            setTimeout(() => {
+                nameCells.forEach((cell, index) => {
+                    if (originalTexts[index]) {
+                        cell.textContent = originalTexts[index];
+                    }
+                });
+                
+                // Cleanup
+                document.body.removeChild(printTitle);
+                document.head.removeChild(printStyle);
+            }, 1000);
         }
 
         // Export to Excel function
