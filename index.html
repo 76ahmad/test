@@ -432,10 +432,6 @@
                 <label for="weekDate" style="font-weight: bold;">תאריך תחילת השבוע:</label>
                 <input type="date" id="weekDate" onchange="updateCalendarDates()">
                 <button onclick="setCurrentWeek()">השבוע הנוכחי</button>
-                <label style="margin-right: 20px;">
-                    <input type="checkbox" id="twoWeeksToggle" onchange="toggleTwoWeeks()" style="width: auto; margin: 0 5px;">
-                    <span style="font-weight: bold;">הצג שבועיים</span>
-                </label>
             </div>
             <button onclick="saveSchedule()">💾 שמור קובץ</button>
             <input accept=".json" id="fileInput" onchange="loadSchedule(event)" style="display:none" type="file"/>
@@ -541,7 +537,7 @@
         const workers = [];
         const places = [];
         let currentWeekStart = null;
-        let showTwoWeeks = false;
+        const showTwoWeeks = true; // Always show two weeks
 
         function toggleTwoWeeks() {
             showTwoWeeks = document.getElementById('twoWeeksToggle').checked;
@@ -572,9 +568,8 @@
             if (!currentWeekStart) return [];
             
             const dates = [];
-            const numDays = showTwoWeeks ? 14 : 7;
-            
-            for (let i = 0; i < numDays; i++) {
+            // Always show 14 days (two weeks)
+            for (let i = 0; i < 14; i++) {
                 const date = new Date(currentWeekStart);
                 date.setDate(currentWeekStart.getDate() + i);
                 dates.push(date);
@@ -1057,8 +1052,7 @@
                 workers,
                 places,
                 assignments: [],
-                weekStartDate: currentWeekStart ? currentWeekStart.toISOString() : null,
-                showTwoWeeks: showTwoWeeks
+                weekStartDate: currentWeekStart ? currentWeekStart.toISOString() : null
             };
             
             const cells = document.querySelectorAll('.time-cell');
@@ -1087,12 +1081,6 @@
                     places.length = 0;
                     workers.push(...data.workers);
                     places.push(...data.places);
-                    
-                    // Load two weeks setting
-                    if (data.showTwoWeeks !== undefined) {
-                        showTwoWeeks = data.showTwoWeeks;
-                        document.getElementById('twoWeeksToggle').checked = showTwoWeeks;
-                    }
                     
                     generateCalendar();
                     
@@ -1126,8 +1114,7 @@
                 workers,
                 places,
                 assignments: [],
-                weekStartDate: currentWeekStart ? currentWeekStart.toISOString() : null,
-                showTwoWeeks: showTwoWeeks
+                weekStartDate: currentWeekStart ? currentWeekStart.toISOString() : null
             };
             
             const cells = document.querySelectorAll('.time-cell');
@@ -1231,24 +1218,20 @@
                 const scheduleData = [];
                 const headerRow = ['עובד'];
                 
-                if (showTwoWeeks) {
-                    days.forEach(day => headerRow.push(`שבוע 1 - ${day}`));
-                    days.forEach(day => headerRow.push(`שבוע 2 - ${day}`));
-                } else {
-                    days.forEach(day => headerRow.push(day));
-                }
+                // Always 14 days (two weeks)
+                days.forEach(day => headerRow.push(`שבוע 1 - ${day}`));
+                days.forEach(day => headerRow.push(`שבוע 2 - ${day}`));
                 
                 scheduleData.push(headerRow);
                 
                 const cells = document.querySelectorAll('.time-cell');
                 let cellIndex = 0;
                 
-                const numDays = showTwoWeeks ? 14 : 7;
-                
                 workers.forEach(worker => {
                     const row = [typeof worker === 'string' ? worker : worker.name];
                     
-                    for (let i = 0; i < numDays; i++) {
+                    // Always 14 days
+                    for (let i = 0; i < 14; i++) {
                         const cellValue = cells[cellIndex] ? cells[cellIndex].textContent.trim() : '';
                         row.push(cellValue);
                         cellIndex++;
@@ -1333,11 +1316,6 @@
                     if (data.weekStartDate) {
                         currentWeekStart = new Date(data.weekStartDate);
                         document.getElementById('weekDate').value = currentWeekStart.toISOString().split('T')[0];
-                    }
-                    
-                    if (data.showTwoWeeks !== undefined) {
-                        showTwoWeeks = data.showTwoWeeks;
-                        document.getElementById('twoWeeksToggle').checked = showTwoWeeks;
                     }
                     
                     generateCalendar();
