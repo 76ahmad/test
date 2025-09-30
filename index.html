@@ -432,6 +432,10 @@
                 <label for="weekDate" style="font-weight: bold;">תאריך תחילת השבוע:</label>
                 <input type="date" id="weekDate" onchange="updateCalendarDates()">
                 <button onclick="setCurrentWeek()">השבוע הנוכחי</button>
+                <label style="margin-right: 20px;">
+                    <input type="checkbox" id="twoWeeksToggle" onchange="toggleTwoWeeks()" style="width: auto; margin: 0 5px;">
+                    <span style="font-weight: bold;">הצג שבועיים</span>
+                </label>
             </div>
             <button onclick="saveSchedule()">💾 שמור קובץ</button>
             <input accept=".json" id="fileInput" onchange="loadSchedule(event)" style="display:none" type="file"/>
@@ -537,6 +541,13 @@
         const workers = [];
         const places = [];
         let currentWeekStart = null;
+        let showTwoWeeks = false;
+
+        function toggleTwoWeeks() {
+            showTwoWeeks = document.getElementById('twoWeeksToggle').checked;
+            generateCalendar(true);
+            autoSaveSchedule();
+        }
 
         function setCurrentWeek() {
             const today = new Date();
@@ -561,7 +572,9 @@
             if (!currentWeekStart) return [];
             
             const dates = [];
-            for (let i = 0; i < 7; i++) {
+            const numDays = showTwoWeeks ? 14 : 7;
+            
+            for (let i = 0; i < numDays; i++) {
                 const date = new Date(currentWeekStart);
                 date.setDate(currentWeekStart.getDate() + i);
                 dates.push(date);
@@ -632,19 +645,64 @@
             headerRow.appendChild(cornerTh);
             
             const weekDates = getWeekDates();
-            days.forEach((day, index) => {
-                const dayTh = document.createElement('th');
-                let headerText = day;
-                
-                if (weekDates.length > 0 && weekDates[index]) {
-                    headerText += `<br><small>${formatShortDate(weekDates[index])}</small>`;
-                }
-                
-                dayTh.innerHTML = headerText;
-                headerRow.appendChild(dayTh);
-            });
             
-            table.appendChild(headerRow);
+            if (showTwoWeeks) {
+                // First week header
+                const week1Header = document.createElement('th');
+                week1Header.colSpan = 7;
+                week1Header.textContent = 'שבוע ראשון';
+                week1Header.style.background = '#4a5568';
+                headerRow.appendChild(week1Header);
+                
+                // Second week header
+                const week2Header = document.createElement('th');
+                week2Header.colSpan = 7;
+                week2Header.textContent = 'שבוע שני';
+                week2Header.style.background = '#2d3748';
+                headerRow.appendChild(week2Header);
+                
+                table.appendChild(headerRow);
+                
+                // Second header row with days
+                const daysRow = document.createElement('tr');
+                const emptyCorner = document.createElement('th');
+                emptyCorner.textContent = 'עובדים / ימים';
+                emptyCorner.className = 'corner-cell';
+                daysRow.appendChild(emptyCorner);
+                
+                // Days for both weeks
+                for (let weekNum = 0; weekNum < 2; weekNum++) {
+                    days.forEach((day, index) => {
+                        const dayTh = document.createElement('th');
+                        let headerText = day;
+                        
+                        const dateIndex = weekNum * 7 + index;
+                        if (weekDates[dateIndex]) {
+                            headerText += `<br><small>${formatShortDate(weekDates[dateIndex])}</small>`;
+                        }
+                        
+                        dayTh.innerHTML = headerText;
+                        daysRow.appendChild(dayTh);
+                    });
+                }
+                table.appendChild(daysRow);
+                
+            } else {
+                // Single week - original logic
+                days.forEach((day, index) => {
+                    const dayTh = document.createElement('th');
+                    let headerText = day;
+                    
+                    if (weekDates.length > 0 && weekDates[index]) {
+                        headerText += `<br><small>${formatShortDate(weekDates[index])}</small>`;
+                    }
+                    
+                    dayTh.innerHTML = headerText;
+                    headerRow.appendChild(dayTh);
+                });
+                
+                table.appendChild(headerRow);
+            }
 
             workers.forEach(worker => {
                 const row = document.createElement('tr');
@@ -999,7 +1057,8 @@
                 workers,
                 places,
                 assignments: [],
-                weekStartDate: currentWeekStart ? currentWeekStart.toISOString() : null
+                weekStartDate: currentWeekStart ? currentWeekStart.toISOString() : null,
+                showTwoWeeks: showTwoWeeks
             };
             
             const cells = document.querySelectorAll('.time-cell');
@@ -1163,20 +1222,29 @@
                 
                 const scheduleData = [];
                 const headerRow = ['עובד'];
-                days.forEach(day => headerRow.push(day));
+                
+                if (showTwoWeeks) {
+                    days.forEach(day => headerRow.push(`שבוע 1 - ${day}`));
+                    days.forEach(day => headerRow.push(`שבוע 2 - ${day}`));
+                } else {
+                    days.forEach(day => headerRow.push(day));
+                }
+                
                 scheduleData.push(headerRow);
                 
                 const cells = document.querySelectorAll('.time-cell');
                 let cellIndex = 0;
                 
+                const numDays = showTwoWeeks ? 14 : 7;
+                
                 workers.forEach(worker => {
                     const row = [typeof worker === 'string' ? worker : worker.name];
                     
-                    days.forEach(() => {
+                    for (let i = 0; i < numDays; i++) {
                         const cellValue = cells[cellIndex] ? cells[cellIndex].textContent.trim() : '';
                         row.push(cellValue);
                         cellIndex++;
-                    });
+                    }
                     
                     scheduleData.push(row);
                 });
@@ -1257,6 +1325,11 @@
                     if (data.weekStartDate) {
                         currentWeekStart = new Date(data.weekStartDate);
                         document.getElementById('weekDate').value = currentWeekStart.toISOString().split('T')[0];
+                    }
+                    
+                    if (data.showTwoWeeks !== undefined) {
+                        showTwoWeeks = data.showTwoWeeks;
+                        document.getElementById('twoWeeksToggle').checked = showTwoWeeks;
                     }
                     
                     generateCalendar();
