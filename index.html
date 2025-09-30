@@ -1087,6 +1087,13 @@
                     places.length = 0;
                     workers.push(...data.workers);
                     places.push(...data.places);
+                    
+                    // Load two weeks setting
+                    if (data.showTwoWeeks !== undefined) {
+                        showTwoWeeks = data.showTwoWeeks;
+                        document.getElementById('twoWeeksToggle').checked = showTwoWeeks;
+                    }
+                    
                     generateCalendar();
                     
                     const cells = document.querySelectorAll('.time-cell');
@@ -1119,7 +1126,8 @@
                 workers,
                 places,
                 assignments: [],
-                weekStartDate: currentWeekStart ? currentWeekStart.toISOString() : null
+                weekStartDate: currentWeekStart ? currentWeekStart.toISOString() : null,
+                showTwoWeeks: showTwoWeeks
             };
             
             const cells = document.querySelectorAll('.time-cell');
