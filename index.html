@@ -484,7 +484,6 @@
         <div class="instructions">
             <h3>📌 הוראות שימוש</h3>
             <p>לחץ על כל תא לבחירת מקום העבודה או חופש. לחץ שוב כדי להסיר הקצאה. הטבלה מציגה שני שבועות מלאים.</p>
-            <p style="color: #d63384; font-weight: bold; margin-top: 10px;">⚠️ לפני הדפסה: בחר "Landscape" או "לרוחב" בהגדרות ההדפסה!</p>
         </div>
     </div>
 
@@ -1194,9 +1193,6 @@
                     cell.innerHTML = `${workerName}<br><small>(${dayCount} ימים)</small>`;
                 }
             });
-
-            // Alert user to set landscape
-            alert('⚠️ חשוב: בחלון ההדפסה, בחר "Landscape" או "לרוחב" בהגדרות!\n\nImportant: In print dialog, select "Landscape" orientation!');
 
             window.print();
 
