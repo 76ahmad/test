@@ -461,6 +461,14 @@
                 <label for="weekDate" style="font-weight: bold;">תאריך תחילת השבוע הראשון:</label>
                 <input type="date" id="weekDate" onchange="updateCalendarDates()">
                 <button onclick="setCurrentWeek()">השבוע הנוכחי</button>
+                <label style="margin-right: 20px;">
+                    <input type="radio" name="orientation" value="landscape" checked onchange="setPrintOrientation(this.value)" style="width: auto; margin: 0 5px;">
+                    <span>הדפסה אופקית</span>
+                </label>
+                <label>
+                    <input type="radio" name="orientation" value="portrait" onchange="setPrintOrientation(this.value)" style="width: auto; margin: 0 5px;">
+                    <span>הדפסה עמודית</span>
+                </label>
             </div>
             <button onclick="saveSchedule()">💾 שמור קובץ</button>
             <input accept=".json" id="fileInput" onchange="loadSchedule(event)" style="display:none" type="file"/>
@@ -567,6 +575,29 @@
         const places = [];
         let currentWeekStart = null;
         let selectedCell = null;
+        let printOrientation = 'landscape'; // Default to landscape
+
+        function setPrintOrientation(orientation) {
+            printOrientation = orientation;
+            // Update the @page rule dynamically
+            const styleId = 'dynamic-print-style';
+            let styleElement = document.getElementById(styleId);
+            
+            if (!styleElement) {
+                styleElement = document.createElement('style');
+                styleElement.id = styleId;
+                document.head.appendChild(styleElement);
+            }
+            
+            styleElement.textContent = `
+                @media print {
+                    @page {
+                        size: A4 ${orientation};
+                        margin: 5mm 8mm;
+                    }
+                }
+            `;
+        }
 
         function setCurrentWeek() {
             const today = new Date();
@@ -1188,41 +1219,20 @@
             nameCells.forEach((cell, index) => {
                 if (workers[index]) {
                     const workerName = typeof workers[index] === 'string' ? workers[index] : workers[index].name;
-                    originalTexts.push(cell.textContent);
+                    originalTexts.push(cell.innerHTML);
                     const dayCount = workerDays[workerName] || 0;
                     cell.innerHTML = `${workerName}<br><small>(${dayCount} ימים)</small>`;
                 }
             });
-
-            const printTitle = document.createElement('div');
-            printTitle.innerHTML = '<h2 style="text-align:center; margin-bottom:20px; font-size:18px; color:black;">לוח משמרות - שבועיים - ' + new Date().toLocaleDateString('he-IL') + '</h2>';
-            printTitle.style.display = 'none';
-            printTitle.className = 'print-title';
-            document.body.appendChild(printTitle);
-
-            const printStyle = document.createElement('style');
-            printStyle.innerHTML = `
-                @media print {
-                    .print-title {
-                        display: block !important;
-                        page-break-after: avoid !important;
-                        margin-bottom: 15px !important;
-                    }
-                }
-            `;
-            document.head.appendChild(printStyle);
 
             window.print();
 
             setTimeout(() => {
                 nameCells.forEach((cell, index) => {
                     if (originalTexts[index]) {
-                        cell.textContent = originalTexts[index];
+                        cell.innerHTML = originalTexts[index];
                     }
                 });
-                
-                document.body.removeChild(printTitle);
-                document.head.removeChild(printStyle);
             }, 1000);
         }
 
@@ -1319,6 +1329,9 @@
         }
 
         window.onload = () => {
+            // Set default print orientation
+            setPrintOrientation('landscape');
+            
             setCurrentWeek();
             
             const saved = localStorage.getItem("scheduleData");
