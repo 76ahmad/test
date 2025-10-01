@@ -461,14 +461,6 @@
                 <label for="weekDate" style="font-weight: bold;">תאריך תחילת השבוע הראשון:</label>
                 <input type="date" id="weekDate" onchange="updateCalendarDates()">
                 <button onclick="setCurrentWeek()">השבוע הנוכחי</button>
-                <label style="margin-right: 20px;">
-                    <input type="radio" name="orientation" value="landscape" checked onchange="setPrintOrientation(this.value)" style="width: auto; margin: 0 5px;">
-                    <span>הדפסה אופקית</span>
-                </label>
-                <label>
-                    <input type="radio" name="orientation" value="portrait" onchange="setPrintOrientation(this.value)" style="width: auto; margin: 0 5px;">
-                    <span>הדפסה עמודית</span>
-                </label>
             </div>
             <button onclick="saveSchedule()">💾 שמור קובץ</button>
             <input accept=".json" id="fileInput" onchange="loadSchedule(event)" style="display:none" type="file"/>
@@ -575,29 +567,6 @@
         const places = [];
         let currentWeekStart = null;
         let selectedCell = null;
-        let printOrientation = 'landscape'; // Default to landscape
-
-        function setPrintOrientation(orientation) {
-            printOrientation = orientation;
-            // Update the @page rule dynamically
-            const styleId = 'dynamic-print-style';
-            let styleElement = document.getElementById(styleId);
-            
-            if (!styleElement) {
-                styleElement = document.createElement('style');
-                styleElement.id = styleId;
-                document.head.appendChild(styleElement);
-            }
-            
-            styleElement.textContent = `
-                @media print {
-                    @page {
-                        size: A4 ${orientation};
-                        margin: 5mm 8mm;
-                    }
-                }
-            `;
-        }
 
         function setCurrentWeek() {
             const today = new Date();
@@ -1329,9 +1298,6 @@
         }
 
         window.onload = () => {
-            // Set default print orientation
-            setPrintOrientation('landscape');
-            
             setCurrentWeek();
             
             const saved = localStorage.getItem("scheduleData");
