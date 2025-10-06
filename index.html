@@ -684,7 +684,27 @@
             const saved = localStorage.getItem("scheduleProfiles");
             if (saved) {
                 profiles = JSON.parse(saved);
+            } else {
+                // Migrate old data if exists
+                const oldData = localStorage.getItem("scheduleData");
+                if (oldData) {
+                    try {
+                        const data = JSON.parse(oldData);
+                        profiles.default = {
+                            name: 'לוח ברירת מחדל',
+                            workers: data.workers || [],
+                            places: data.places || [],
+                            assignments: data.assignments || [],
+                            weekStartDate: data.weekStartDate || null
+                        };
+                        saveProfiles();
+                        localStorage.removeItem("scheduleData"); // Clean up old data
+                    } catch (e) {
+                        console.error('Error migrating old data:', e);
+                    }
+                }
             }
+            
             if (!profiles.default) {
                 profiles.default = {
                     name: 'לוח ברירת מחדל',
