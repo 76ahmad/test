@@ -740,37 +740,55 @@
 
         function loadCurrentProfile() {
             const profile = profiles[currentProfile];
-            if (!profile) return;
+            if (!profile) {
+                console.error('Profile not found:', currentProfile);
+                return;
+            }
 
+            // Clear current data
             workers.length = 0;
             places.length = 0;
-            workers.push(...(profile.workers || []));
-            places.push(...(profile.places || []));
+            
+            // Load profile data
+            if (profile.workers && Array.isArray(profile.workers)) {
+                workers.push(...profile.workers);
+            }
+            if (profile.places && Array.isArray(profile.places)) {
+                places.push(...profile.places);
+            }
 
             if (profile.weekStartDate) {
-                currentWeekStart = new Date(profile.weekStartDate);
-                document.getElementById('weekDate').value = currentWeekStart.toISOString().split('T')[0];
+                try {
+                    currentWeekStart = new Date(profile.weekStartDate);
+                    document.getElementById('weekDate').value = currentWeekStart.toISOString().split('T')[0];
+                } catch (e) {
+                    console.error('Error setting date:', e);
+                    setCurrentWeek();
+                }
             } else {
                 setCurrentWeek();
             }
 
-            generateCalendar();
+            // Generate calendar first
+            generateCalendar(false);
 
-            const cells = document.querySelectorAll('.time-cell');
-            if (profile.assignments) {
-                profile.assignments.forEach(a => {
-                    if (cells[a.index]) {
-                        cells[a.index].textContent = a.value;
-                        if (a.isHoliday || a.value === 'חופש' || a.value === 'יום עטלה') {
-                            cells[a.index].classList.add('holiday');
-                        } else {
-                            cells[a.index].classList.add('assigned');
+            // Then restore assignments
+            setTimeout(() => {
+                const cells = document.querySelectorAll('.time-cell');
+                if (profile.assignments && Array.isArray(profile.assignments)) {
+                    profile.assignments.forEach(a => {
+                        if (cells[a.index]) {
+                            cells[a.index].textContent = a.value || '';
+                            if (a.isHoliday || a.value === 'חופש' || a.value === 'יום עטלה') {
+                                cells[a.index].classList.add('holiday');
+                            } else if (a.value) {
+                                cells[a.index].classList.add('assigned');
+                            }
                         }
-                    }
-                });
-            }
-
-            updateAssignmentSummary();
+                    });
+                }
+                updateAssignmentSummary();
+            }, 100);
         }
 
         function saveProfiles() {
