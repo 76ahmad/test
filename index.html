@@ -1,4 +1,17 @@
-<!DOCTYPE html>
+<div class="controls">
+            <div class="date-selector">
+                <div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 10px;">
+                    <label for="profileSelect" style="font-weight: bold;">בחר לוח:</label>
+                    <select id="profileSelect" onchange="switchProfile()" style="padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.95rem; min-width: 180px; min-height: 44px;">
+                        <option value="default">לוח ברירת מחדל</option>
+                    </select>
+                    <button onclick="showCreateProfileModal()" class="btn-info" style="padding: 10px 16px;">➕ לוח חדש</button>
+                    <button onclick="showManageProfilesModal()" class="btn-secondary" style="padding: 10px 16px;">⚙️ נהל לוחות</button>
+                </div>
+                <label for="weekDate" style="font-weight: bold;">תאריך תחילת השבוע הראשון:</label>
+                <input type="date" id="weekDate" onchange="updateCalendarDates()">
+                <button onclick="setCurrentWeek()">השבוע הנוכחי</button>
+            </div><!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
     <meta charset="utf-8"/>
@@ -630,6 +643,25 @@
         </div>
     </div>
 
+    <div class="modal" id="createProfileModal">
+        <div class="modal-content">
+            <h3>צור לוח חדש</h3>
+            <input id="newProfileName" placeholder="שם הלוח (לדוגמה: ינואר 2025)" type="text" style="width: 100%;"/>
+            <div style="margin-top: 1rem; text-align: center;">
+                <button onclick="createNewProfile()">צור</button>
+                <button class="btn-secondary" onclick="closeCreateProfileModal()">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="manageProfilesModal">
+        <div class="modal-content">
+            <h3>ניהול לוחות</h3>
+            <div id="profileListContainer" style="max-height: 300px; overflow-y: auto;"></div>
+            <button class="btn-secondary" onclick="closeManageProfilesModal()">סגור</button>
+        </div>
+    </div>
+
     <div class="modal" id="workerDetailsModal">
         <div class="modal-content">
             <h3>פרטי עובד</h3>
@@ -644,6 +676,179 @@
         const places = [];
         let currentWeekStart = null;
         let selectedCell = null;
+        let currentProfile = 'default';
+        let profiles = {};
+
+        // Profile Management Functions
+        function loadProfiles() {
+            const saved = localStorage.getItem("scheduleProfiles");
+            if (saved) {
+                profiles = JSON.parse(saved);
+            }
+            if (!profiles.default) {
+                profiles.default = {
+                    name: 'לוח ברירת מחדל',
+                    workers: [],
+                    places: [],
+                    assignments: [],
+                    weekStartDate: null
+                };
+            }
+            updateProfileSelector();
+        }
+
+        function updateProfileSelector() {
+            const select = document.getElementById('profileSelect');
+            select.innerHTML = '';
+            
+            for (const [key, profile] of Object.entries(profiles)) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = profile.name;
+                if (key === currentProfile) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            }
+        }
+
+        function switchProfile() {
+            const select = document.getElementById('profileSelect');
+            currentProfile = select.value;
+            loadCurrentProfile();
+        }
+
+        function loadCurrentProfile() {
+            const profile = profiles[currentProfile];
+            if (!profile) return;
+
+            workers.length = 0;
+            places.length = 0;
+            workers.push(...(profile.workers || []));
+            places.push(...(profile.places || []));
+
+            if (profile.weekStartDate) {
+                currentWeekStart = new Date(profile.weekStartDate);
+                document.getElementById('weekDate').value = currentWeekStart.toISOString().split('T')[0];
+            } else {
+                setCurrentWeek();
+            }
+
+            generateCalendar();
+
+            const cells = document.querySelectorAll('.time-cell');
+            if (profile.assignments) {
+                profile.assignments.forEach(a => {
+                    if (cells[a.index]) {
+                        cells[a.index].textContent = a.value;
+                        if (a.isHoliday || a.value === 'חופש' || a.value === 'יום עטלה') {
+                            cells[a.index].classList.add('holiday');
+                        } else {
+                            cells[a.index].classList.add('assigned');
+                        }
+                    }
+                });
+            }
+
+            updateAssignmentSummary();
+        }
+
+        function saveProfiles() {
+            localStorage.setItem("scheduleProfiles", JSON.stringify(profiles));
+        }
+
+        function showCreateProfileModal() {
+            document.getElementById("createProfileModal").style.display = "flex";
+        }
+
+        function closeCreateProfileModal() {
+            document.getElementById("createProfileModal").style.display = "none";
+            document.getElementById("newProfileName").value = '';
+        }
+
+        function createNewProfile() {
+            const nameInput = document.getElementById("newProfileName");
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                alert("נא להזין שם ללוח.");
+                return;
+            }
+
+            const profileId = 'profile_' + Date.now();
+            profiles[profileId] = {
+                name: name,
+                workers: [],
+                places: [],
+                assignments: [],
+                weekStartDate: null
+            };
+
+            saveProfiles();
+            updateProfileSelector();
+            
+            currentProfile = profileId;
+            document.getElementById('profileSelect').value = profileId;
+            loadCurrentProfile();
+            
+            closeCreateProfileModal();
+        }
+
+        function showManageProfilesModal() {
+            const container = document.getElementById("profileListContainer");
+            container.innerHTML = '';
+            
+            for (const [key, profile] of Object.entries(profiles)) {
+                if (key === 'default') continue; // Don't allow deleting default
+                
+                const row = document.createElement('div');
+                row.className = 'place-row';
+                row.innerHTML = `
+                    <span>${profile.name}</span>
+                    <div>
+                        <button onclick="renameProfile('${key}')" style="margin: 2px; padding: 8px 12px;">✏️</button>
+                        <button class="btn-secondary" onclick="deleteProfile('${key}')" style="margin: 2px; padding: 8px 12px;">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            }
+
+            if (Object.keys(profiles).length === 1) {
+                container.innerHTML = '<p style="text-align: center; color: #999;">אין לוחות נוספים</p>';
+            }
+            
+            document.getElementById("manageProfilesModal").style.display = 'flex';
+        }
+
+        function closeManageProfilesModal() {
+            document.getElementById("manageProfilesModal").style.display = "none";
+        }
+
+        function renameProfile(profileId) {
+            const newName = prompt("הזן שם חדש ללוח:", profiles[profileId].name);
+            if (newName && newName.trim()) {
+                profiles[profileId].name = newName.trim();
+                saveProfiles();
+                updateProfileSelector();
+                showManageProfilesModal();
+            }
+        }
+
+        function deleteProfile(profileId) {
+            if (confirm("האם אתה בטוח שתרצה למחוק את הלוח הזה?")) {
+                delete profiles[profileId];
+                
+                if (currentProfile === profileId) {
+                    currentProfile = 'default';
+                    document.getElementById('profileSelect').value = 'default';
+                    loadCurrentProfile();
+                }
+                
+                saveProfiles();
+                updateProfileSelector();
+                showManageProfilesModal();
+            }
+        }
 
         function setCurrentWeek() {
             const today = new Date();
@@ -1137,6 +1342,8 @@
         }
 
         function autoSaveSchedule() {
+            if (!profiles[currentProfile]) return;
+            
             const data = {
                 workers,
                 places,
@@ -1155,7 +1362,12 @@
                 }
             });
             
-            localStorage.setItem("scheduleData", JSON.stringify(data));
+            profiles[currentProfile] = {
+                name: profiles[currentProfile].name,
+                ...data
+            };
+            
+            saveProfiles();
             updateAssignmentSummary();
         }
 
@@ -1375,44 +1587,8 @@
         }
 
         window.onload = () => {
-            setCurrentWeek();
-            
-            const saved = localStorage.getItem("scheduleData");
-            if (saved) {
-                try {
-                    const data = JSON.parse(saved);
-                    workers.push(...(data.workers || []));
-                    places.push(...(data.places || []));
-                    
-                    if (data.weekStartDate) {
-                        currentWeekStart = new Date(data.weekStartDate);
-                        document.getElementById('weekDate').value = currentWeekStart.toISOString().split('T')[0];
-                    }
-                    
-                    generateCalendar();
-                    
-                    const cells = document.querySelectorAll('.time-cell');
-                    if (data.assignments) {
-                        data.assignments.forEach(a => {
-                            if (cells[a.index]) {
-                                cells[a.index].textContent = a.value;
-                                if (a.isHoliday || a.value === 'חופש' || a.value === 'יום עטלה') {
-                                    cells[a.index].classList.add('holiday');
-                                } else {
-                                    cells[a.index].classList.add('assigned');
-                                }
-                            }
-                        });
-                    }
-                    
-                    updateAssignmentSummary();
-                } catch (error) {
-                    console.error('Error loading saved data:', error);
-                    generateCalendar();
-                }
-            } else {
-                generateCalendar();
-            }
+            loadProfiles();
+            loadCurrentProfile();
         };
     </script>
 </body>
