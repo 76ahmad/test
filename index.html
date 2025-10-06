@@ -1474,6 +1474,12 @@
         }
 
         function printSchedule() {
+            // Make sure we have data to print
+            if (workers.length === 0) {
+                alert("אין עובדים להדפסה. אנא הוסף עובדים תחילה.");
+                return;
+            }
+
             const workerDays = {};
             const rows = document.querySelectorAll('#calendarTable tr:not(:first-child):not(:nth-child(2))');
             
@@ -1503,15 +1509,19 @@
                 }
             });
 
-            window.print();
-
+            // Small delay to ensure DOM updates
             setTimeout(() => {
-                nameCells.forEach((cell, index) => {
-                    if (originalTexts[index]) {
-                        cell.innerHTML = originalTexts[index];
-                    }
-                });
-            }, 1000);
+                window.print();
+                
+                // Restore original text after print dialog closes
+                setTimeout(() => {
+                    nameCells.forEach((cell, index) => {
+                        if (originalTexts[index]) {
+                            cell.innerHTML = originalTexts[index];
+                        }
+                    });
+                }, 1000);
+            }, 100);
         }
 
         function exportToExcel() {
